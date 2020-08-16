@@ -1,28 +1,42 @@
 import React, { Component } from 'react';
 
+import axios from 'axios';
+
 class App extends Component{
 
   constructor() {
     super();
     this.state = {
+      users: []
+    }
+  }
+
+  async componentDidMount(){
+    const response = await axios.get('https://jsonplaceholder.typicode.com/users')
+
+    console.log('response', response);
+
+    this.setState({
       users: [
         {
+          id: 1,
           name: 'Diego',
           mail: 'diegorojas431@gmail.com',
           webSite: 'diegorojas93.github.io'
         },
         {
+          id: 2,
           name: 'Platzi',
           mail: 'platzi@gmail.com',
           webSite: 'platzi.com'
         }
       ]
-    }
+    })
   }
 
   putRow = () => (
     this.state.users.map((user) => (
-      <tr>
+      <tr key={user.id}>
         <td>
           {user.name}
         </td>
