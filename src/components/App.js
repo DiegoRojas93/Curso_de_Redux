@@ -1,66 +1,19 @@
-import React, { Component } from 'react';
+import React, { Fragment }from 'react';
+import { BrowserRouter, Route } from 'react-router-dom';
 
-import axios from 'axios';
+import Menu from './Menu'
+import Usuarios from './Usuarios/index'
 
-class App extends Component{
+const Tareas = () => <div>Tareas</div>
 
-  constructor() {
-    super();
-    this.state = {
-      users: []
-    }
-  }
+const App = (props) => (
+  <BrowserRouter>
+    <Menu />
+    <div id="margen">
+      <Route exact path='/' component={ Usuarios }/>
+      <Route exact path='/tareas' component={ Tareas }/>
+    </div>
+  </BrowserRouter>
+)
 
-  async componentDidMount(){
-    const response = await axios.get('https://jsonplaceholder.typicode.com/users')
-
-    console.log('response', response.data);
-
-    this.setState({
-      users: response.data
-    })
-  }
-
-  putRow = () => (
-    this.state.users.map((user) => (
-      <tr key={user.id}>
-        <td>
-          {user.name}
-        </td>
-        <td>
-          {user.email}
-        </td>
-        <td>
-          {user.website}
-        </td>
-      </tr>
-    ))
-  );
-
-  render(){
-    return(
-      <div className="margin">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>
-                Nombre
-              </th>
-              <th>
-                Correo
-              </th>
-              <th>
-                Enlace
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            { this.putRow() }
-          </tbody>
-        </table>
-      </div>
-    )
-  }
-}
-
-export default App
+export default App;
