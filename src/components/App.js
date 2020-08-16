@@ -14,23 +14,10 @@ class App extends Component{
   async componentDidMount(){
     const response = await axios.get('https://jsonplaceholder.typicode.com/users')
 
-    console.log('response', response);
+    console.log('response', response.data);
 
     this.setState({
-      users: [
-        {
-          id: 1,
-          name: 'Diego',
-          mail: 'diegorojas431@gmail.com',
-          webSite: 'diegorojas93.github.io'
-        },
-        {
-          id: 2,
-          name: 'Platzi',
-          mail: 'platzi@gmail.com',
-          webSite: 'platzi.com'
-        }
-      ]
+      users: response.data
     })
   }
 
@@ -41,10 +28,10 @@ class App extends Component{
           {user.name}
         </td>
         <td>
-          {user.mail}
+          {user.email}
         </td>
         <td>
-          {user.webSite}
+          {user.website}
         </td>
       </tr>
     ))
