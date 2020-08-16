@@ -1,54 +1,65 @@
-import React from 'react';
+import React, { Component } from 'react';
 
-const App = () => {
+class App extends Component{
 
-  const putRow = () => [
-    <tr>
-      <td>
-        Diego
-      </td>
-      <td>
-        diegorojas431@gmail.com
-      </td>
-      <td>
-        diegorojas93.github.io
-      </td>
-    </tr>,
-    <tr>
-      <td>
-        Platzi
-      </td>
-      <td>
-        platzi@gmail.com
-      </td>
-      <td>
-        platzi.com
-      </td>
-    </tr>
-  ]
+  constructor() {
+    super();
+    this.state = {
+      users: [
+        {
+          name: 'Diego',
+          mail: 'diegorojas431@gmail.com',
+          webSite: 'diegorojas93.github.io'
+        },
+        {
+          name: 'Platzi',
+          mail: 'platzi@gmail.com',
+          webSite: 'platzi.com'
+        }
+      ]
+    }
+  }
 
-  return(
-    <div className="margin">
-      <table className="table">
-        <thead>
-          <tr>
-            <th>
-              Nombre
-            </th>
-            <th>
-              Correo
-            </th>
-            <th>
-              Enlace
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          { putRow() }
-        </tbody>
-      </table>
-    </div>
-  )
+  putRow = () => (
+    this.state.users.map((user) => (
+      <tr>
+        <td>
+          {user.name}
+        </td>
+        <td>
+          {user.mail}
+        </td>
+        <td>
+          {user.webSite}
+        </td>
+      </tr>
+    ))
+  );
+
+  render(){
+    return(
+      <div className="margin">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>
+                Nombre
+              </th>
+              <th>
+                Correo
+              </th>
+              <th>
+                Enlace
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            { this.putRow() }
+          </tbody>
+        </table>
+      </div>
+    )
+  }
 }
 
 export default App
