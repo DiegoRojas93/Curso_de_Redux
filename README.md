@@ -2,14 +2,60 @@
 
 [![Redux](https://i.ibb.co/WH2dzkQ/redux-simple.gif "Redux")](https://i.ibb.co/WH2dzkQ/redux-simple.gif "Redux")
 
-### Fases de Redux
+### Fases de Redux extras
 
-#### Explicación teórica y práctica: ciclo completo de Redux
+Este modulo vamos a aprender typs **Extras** que nos ayudaran a implementar a desarrollar aplicaciones con redux sin fallar en el intento.
 
-Cuando nuestro componente terminar de cargar (componentDidMount) llama al Action Creator, luego el Action Creator contiene la promesa, trae los datos necesarios y luego va y modifica al Reducer para que actualice el estado usando dispatch() y luego lo actualizamos en el componente con el mapStateToProps.
+#### Archivos Types
 
-![Ciclo de vida de Redux en el proyecto](https://i.imgur.com/Uagn0bE.png)
+Generalmente siempre vamos a comenter TYPOS (errores al escribir codigo, como por ejemplo: escribir palabras con letras faltantes o en forma desordenada)
 
-![# Práctica: ciclo completo de Redux](https://static.platzi.com/media/user_upload/redux-39282628-78b5-4aa6-a9dd-0c9bea87d100.jpg)
+Esto es muy importante, debido a que podemos cambiar los types de los actions o cambiar el tipo de caso en el reducer sin darnos cuenta.
 
-**Si no tenemos estos pasos no nos va a funcionar.**
+Para solucionar esto deberemos crear un archivo llamado ./src/types/usersTipes.js y todo lo que voy a mandar del action al reducer y del reducer al componente lo voy a traer de aqui.
+
+```
+export const TRAER_TODOS = `traer_usuarios`
+```
+Luego lo importaremos a nuestros archivos de actions y reducers
+
+
+./src/actions/usuariosActions.js
+```
+import axios from 'axios';
+
+import { TRAER_TODOS } from '../types/usersTipes'
+
+export const traerTodos = () => async (dispatch) => {
+
+	const response =await axios.get('https://jsonplaceholder.typicode.com/users');
+
+	dispatch({
+		type: TRAER_TODOS,
+		payload: response.data
+		// payload: [1, 2, 3]
+	})
+}
+```
+
+./src/reducers/usuariosReducer.js
+```
+import { TRAER_TODOS } from '../types/usersTipes'
+
+const INITIAL_STATE = {
+	usuarios: []
+};
+
+export default ( state = INITIAL_STATE, action) => {
+	switch (action.type) {
+		case TRAER_TODOS:
+			return { ...state, usuarios: action.payload}
+
+		default: return state;
+	}
+}
+```
+
+**NOTA :** Si en dado caso importas la constante de forma equivocada, el navegador te arrojara una advertencia sobre el caso y sabras lo sucedio.
+
+![Error](https://i.imgur.com/Uagn0bE.png)
