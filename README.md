@@ -1,21 +1,33 @@
 # Curso de Redux por Bedu
 
-### Introducción: las fases de Redux
+### Fases de Redux
 
-#### Los cuatro pilares de Redux son:
+#### Store
 
-- **Store:* Almacenamiento; es el principal pilar de todo Redux, debido a que ahí se almacenara todo lo que necesitamos, toda la información.
+Para empezar a utilizar Redux deberemos instalar sus respectivos paquetes:
 
-- **Reducers:* Estados; dependiendo del componente, es la informacion que vamos a tener, por ejemplo, el reducers del componente de usuarios, es el que va a tener el estado(la informacion) de cada uno de los usuarios y se los va entregar al almacenamiento.
+`npm install redux react-redux -S -E`
 
-- **Actions Creators:* Funciones; son todas las funciones que se llamans para pedir informacion que generamente son promesas.
+Luego de empezamos a configurar nuestro index.js, el cual es el archivo que se conecta a nuestro HTML y es el que renderiza todo nuestro proyecto. Esto con el fin te empezar a tener un ambiente para el almacenamiento global.
 
-- **Componente:* codigo JSX; son el codigo JSX que vemos renderizado en pantalla.
+```
+import React from 'react';
+import ReactDOM from 'react-dom';
+import './index.css';
+import App from './components/App';
 
-#### ¿Como funciona?
+import {createStore } from 'redux';
+import { Provider } from 'react-redux';
 
-**Componente** => se comunica con el => **Action Creators** => da la informacion al => **Reducers** => Una vez actualizado el reducers, la informacion regresa al estado del=> **Componente:**
+const store = createStore (
+  {}, // Todos los reducers
+  {}  // Estado inicial
+)
 
-El DOM va a saber que cambiar de por las actualizaciones que hace el compoente y por su puesto el virtualDOM
-
-**EL CORAZON DE REDUX ES SU ALMACENAMIENTO DE ESTADO GLOBAL**
+ReactDOM.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+  document.getElementById('root')
+);
+```
