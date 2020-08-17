@@ -2,12 +2,22 @@
 
 ### Fases de Redux
 
-#### Conexión a un componente
+#### Actions Creators
 
-Ahora vamos a conectar un componente a un reducer.
+Ahora lo que vamos ahacer es traer la informacion a nuestro componente, esto lo hacemos con los ***Action Creators***
 
+./src/actions/usuariosActions.js
+```
+export const traerTodos = () => (dispatch) => { // el dispatch es el que va disparar la llamada y es el que va a contactar al reducer para que haca el cambio de estado
 
-./src/components/usuarios/index.jsx
+	dispatch({
+		type: 'traer_usuarios',
+		payload: [1,2,3]
+	})
+}
+```
+
+./src/components/Usuarios.index.jsx
 ```
 import React, { Component } from 'react';
 
@@ -15,15 +25,19 @@ import axios from 'axios';
 
 import { connect } from 'react-redux'
 
+import * as usuariosActions from '../../actions/usuariosActions'
+
 class Usuarios extends Component{
 
-  // async componentDidMount(){
-  //   const response = await axios.get('https://jsonplaceholder.typicode.com/users')
+  componentDidMount(){
+    // const response = await axios.get('https://jsonplaceholder.typicode.com/users')
 
-  //   this.setState({
-  //     usuarios: response.data
-  //   })
-  // }
+    // this.setState({
+    //   usuarios: response.data
+    // })
+
+    this.props.traerTodos();
+  }
 
   ponerFilas = () => (
     this.props.usuarios.map((usuario) => (
@@ -43,7 +57,7 @@ class Usuarios extends Component{
 
   render(){
 
-		console.log(this.props)
+    console.log(this.props);
 
     return(
       <div>
@@ -76,21 +90,5 @@ const mapStateProps = (reducers) => {
 
 // export default connect({Todos los reducers que se necesitaran}, {/Actions})(Usuarios);
 
-export default connect(mapStateProps, {/*Actions*/})(Usuarios);
-```
-
-./src/components/reducers/ususariosReducers.jsx
-```
-const INITIAL_STATE = {
-	usuarios: []
-};
-
-export default ( state = INITIAL_STATE, action) => {
-	switch (action.type) {
-		case 'traer_usuarios':
-			return { ...state, usuarios: action.payload}
-
-			default: return state;
-	}
-}
+export default connect(mapStateProps, {usuariosActions})(Usuarios);
 ```
