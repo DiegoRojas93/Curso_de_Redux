@@ -1,23 +1,21 @@
 # Curso de Redux por Bedu
 
-### ¿Qúe es Redux, cuándo usarlo y por qué?
+### Introducción: las fases de Redux
 
-Redux es un contenedor predecible del estado de aplicaciones JavaScript. Es decir, que es una herramienta de uso libre que nos deja almacenar los estados de cada uno de los componesnte de nuestro proyecto en un solo lugar, su creador es Dan Abramov.
+#### Los cuatro pilares de Redux son:
 
-Los principios de Redux son:
+- **Store:* Almacenamiento; es el principal pilar de todo Redux, debido a que ahí se almacenara todo lo que necesitamos, toda la información.
 
-- **Almacenamiento:** que los estados se almacenen en un solo lugar.
+- **Reducers:* Estados; dependiendo del componente, es la informacion que vamos a tener, por ejemplo, el reducers del componente de usuarios, es el que va a tener el estado(la informacion) de cada uno de los usuarios y se los va entregar al almacenamiento.
 
-- **Inmutable: ** que los estados no se sobreescriban y se esten creando unos nuevos.
+- **Actions Creators:* Funciones; son todas las funciones que se llamans para pedir informacion que generamente son promesas.
 
-- **Centralizado:** toda nuestra aplicacion se almacenara en un solo lugar.
+- **Componente:* codigo JSX; son el codigo JSX que vemos renderizado en pantalla.
 
-Te ayuda a escribir aplicaciones que se comportan de manera consistente, corren en distintos ambientes (cliente, servidor y nativo), y son fáciles de probar.
+#### ¿Como funciona?
 
-#### ¿Cuando utilizar Redux?
+**Componente** => se comunica con el => **Action Creators** => da la informacion al => **Reducers** => Una vez actualizado el reducers, la informacion regresa al estado del=> **Componente:**
 
-- **Aplicaciones Grandes:** no es recomendable usar redux en aplicaciones pequeñas, mejor utiliza el estado local para este tipo de aplicaciones.
+El DOM va a saber que cambiar de por las actualizaciones que hace el compoente y por su puesto el virtualDOM
 
-- **Compartir informacion:** por ejemplo, si necesitas usar la informacion de un usuario en varios o muchos componentes en el que los haya ingresado en un login ó formulario, este seria un buen momento para utilizar Redux.
-
-- **Estados, no formatos:** utilizar y manejar informacion, por ejemplo, usar los colores, fuentes, tamaños, imagenes, etc.
+**EL CORAZON DE REDUX ES SU ALMACENAMIENTO DE ESTADO GLOBAL**
