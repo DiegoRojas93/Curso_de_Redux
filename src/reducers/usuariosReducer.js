@@ -7,6 +7,6 @@ export default ( state = INITIAL_STATE, action) => {
 		case 'traer_usuarios':
 			return { ...state, usuarios: action.payload}
 
-			default: return state;
+		default: return state;
 	}
 }

@@ -1,19 +1,12 @@
 import React, { Component } from 'react';
 
-import axios from 'axios';
+import { connect } from 'react-redux';
 
-import { connect } from 'react-redux'
-
-import * as usuariosActions from '../../actions/usuariosActions'
+import * as usuariosActions from '../../actions/usuariosActions';
 
 class Usuarios extends Component{
 
-  componentDidMount(){
-    // const response = await axios.get('https://jsonplaceholder.typicode.com/users')
-
-    // this.setState({
-    //   usuarios: response.data
-    // })
+  componentDidMount() {
 
     this.props.traerTodos();
   }
@@ -36,7 +29,6 @@ class Usuarios extends Component{
 
   render(){
 
-    console.log(this.props);
 
     return(
       <div>
@@ -63,10 +55,10 @@ class Usuarios extends Component{
   }
 }
 
-const mapStateProps = (reducers) => {
-  return reducers.usuariosReducers
-}
+const mapStateToProps = (reducers) => {
+  return reducers.usuariosReducer;
+};
 
 // export default connect({Todos los reducers que se necesitaran}, {/Actions})(Usuarios);
 
-export default connect(mapStateProps, {usuariosActions})(Usuarios);
+export default connect(mapStateToProps, usuariosActions)(Usuarios);
