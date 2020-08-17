@@ -2,47 +2,84 @@
 
 ### Fases de Redux
 
-#### Reducers
+#### Conexión a un componente
 
-Los reducers son funciones puras que reciben como parámetros, el estado inicial y una acción.
+Ahora vamos a conectar un componente a un reducer.
 
+
+./src/components/usuarios/index.jsx
 ```
-//Aquí se crea la función, el estado inicial es un objeto vacío, y la acción es la //"tarea a realizar"
-function reducer(state = {}, action){
-	//se crea el switch porque llegaran varias tareas y solo se distingue por el //nombre
+import React, { Component } from 'react';
 
-	switch(action.type){
-	//la tarea que llegara en esta ocasión es 'traer_usuarios'
+import axios from 'axios';
 
-		case'traer_usuarios':{
+import { connect } from 'react-redux'
 
-	//esta parte es destructurar el estado que es un objeto curso de fundamentos //de JavaScripts muy bueno
+class Usuarios extends Component{
 
-		return{...state,  usuarios: action.payload}
+  // async componentDidMount(){
+  //   const response = await axios.get('https://jsonplaceholder.typicode.com/users')
+
+  //   this.setState({
+  //     usuarios: response.data
+  //   })
+  // }
+
+  ponerFilas = () => (
+    this.props.usuarios.map((usuario) => (
+      <tr key={usuario.id}>
+        <td>
+          {usuario.name}
+        </td>
+        <td>
+          {usuario.email}
+        </td>
+        <td>
+          {usuario.website}
+        </td>
+      </tr>
+    ))
+  );
+
+  render(){
+
+		console.log(this.props)
+
+    return(
+      <div>
+        <table className="tabla">
+          <thead>
+            <tr>
+              <th>
+                Nombre
+              </th>
+              <th>
+                Correo
+              </th>
+              <th>
+                Enlace
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            { this.ponerFilas() }
+          </tbody>
+        </table>
+      </div>
+    )
+  }
 }
 
-//despues de todo eso de exportara el reducer
+const mapStateProps = (reducers) => {
+  return reducers.usuariosReducers
+}
 
-export default reducer;
+// export default connect({Todos los reducers que se necesitaran}, {/Actions})(Usuarios);
+
+export default connect(mapStateProps, {/*Actions*/})(Usuarios);
 ```
-----
 
-Las ***Action Creators* describen que algo pasó, pero no especifican cómo cambió el estado de la aplicación en respuesta. Esto es trabajo de los reducers.
-
-El ***Provider*** es el componente de Redux en el cual encerraremos nuestra aplicación para que puedan comunicarse los componentes entre ellos.
-
-Para nuestro proyecto vamos a darle un reducer valido a nustro almacenamiento para que nuetra aplicacion funcione.
-
-./src/reducers/index.js
-```
-import { combineReducers } from 'redux';
-import usuariosReducers from './usuariosReducers'
-
-export default combineReducers ({
-	usuariosReducers
-})
-```
-./src/reducers/usuariosReducers.js
+./src/components/reducers/ususariosReducers.jsx
 ```
 const INITIAL_STATE = {
 	usuarios: []
@@ -56,31 +93,4 @@ export default ( state = INITIAL_STATE, action) => {
 			default: return state;
 	}
 }
-```
-
-./src/index.js
-```
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-import App from './components/App';
-
-import {createStore } from 'redux';
-import { Provider } from 'react-redux';
-
-import reducers from './reducers/index'
-
-const store = createStore (
-  reducers, // Todos los reducers
-  {}  // Estado inicial
-)
-
-ReactDOM.render(
-  <React.StrictMode>
-    <Provider store={store} > {/* Intenta proveer un almacenamiento al container APP, es decir que sú store es igual a la constante store ya creada*/}
-      <App />
-    </Provider>
-  </React.StrictMode>,
-  document.getElementById('root')
-);
 ```
