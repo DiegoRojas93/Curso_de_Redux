@@ -13,7 +13,8 @@ export default ( state = INITIAL_STATE, action) => {
 			return {
 				...state,
 				publicaciones: action.payload,
-				cargando: false
+				cargando: false,
+				error: ''
 			}
 
 		case CARGANDO:
