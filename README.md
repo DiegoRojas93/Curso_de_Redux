@@ -6,12 +6,11 @@
 
 Este modulo vamos a aprender typs **Extras** que nos ayudaran a implementar a desarrollar aplicaciones con redux sin fallar en el intento.
 
-#### Componente Spinner
+#### Componente Not Found
 
-Podemos hacer un loading cuando los datos de la api esta cagando, con el fin de informarle al usuario que esta cargando la informacion.
+Por regla general debemos advertirle al usuario que si la peticion a una base de datos o a una api fallo en su respuesta se le muestre un mensaje a su pantalla, para ello debemos crear un componente con sus estilos para ser mostrados.
 
-
-.src/components/Usuarios/index.js
+.src/components/Usarios/index.jsx
 ```
 import React, { Component } from 'react';
 
@@ -20,6 +19,7 @@ import { connect } from 'react-redux';
 import * as usuariosActions from '../../actions/usuariosActions';
 
 import Spinner from '../General/Spinner'
+import NotFound from '../General/NotFound'
 
 class Usuarios extends Component{
 
@@ -31,44 +31,21 @@ class Usuarios extends Component{
   ponerContenido = () => {
 
     if(this.props.cargando){
-      return < Spinner/>;
+      return <Spinner />;
     }
+
+    if(this.props.error){
+      return <NotFound mensaje={this.props.error}/>;
+    }
+
+
     return (
-      <table className="tabla">
-          <thead>
-            <tr>
-              <th>
-                Nombre
-              </th>
-              <th>
-                Correo
-              </th>
-              <th>
-                Enlace
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            { this.ponerFilas() }
-          </tbody>
-        </table>
+			...
     )
   }
 
   ponerFilas = () => (
-    this.props.usuarios.map((usuario) => (
-      <tr key={usuario.id}>
-        <td>
-          {usuario.name}
-        </td>
-        <td>
-          {usuario.email}
-        </td>
-        <td>
-          {usuario.website}
-        </td>
-      </tr>
-    ))
+		...
   );
 
   render(){
@@ -78,7 +55,7 @@ class Usuarios extends Component{
 
     return(
       <div>
-       { this.ponerContenido() }
+        { this.ponerContenido() }
       </div>
     )
   }
@@ -93,141 +70,44 @@ const mapStateToProps = (reducers) => {
 export default connect(mapStateToProps, usuariosActions)(Usuarios);
 ```
 
-.src/General/Spinner.js
+.src/components/General/NotFound.js
 ```
 import React from 'react';
-import '../../css/spinner.css'
 
-const Spinner = (props) => (
-	<div className="center">
-		<div className="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+const NotFound = (props) => (
+	<div>
+		<h1 className="center rojo">Not Found 404</h1>
+		<h3 className="center black">{props.mensaje}</h3>
 	</div>
 )
 
-export default Spinner
+export default NotFound
 ```
-
-.src/css/spinner.css
-[loading.io](https://loading.io/css "loading.io")
+.src/actions/usuariosActions.js
 ```
-.lds-roller {
-  display: inline-block;
-  position: relative;
-  width: 80px;
-  height: 80px;
-}
-.lds-roller div {
-  animation: lds-roller 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-  transform-origin: 40px 40px;
-}
-.lds-roller div:after {
-  content: " ";
-  display: block;
-  position: absolute;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #253a46;
-  margin: -4px 0 0 -4px;
-}
-.lds-roller div:nth-child(1) {
-  animation-delay: -0.036s;
-}
-.lds-roller div:nth-child(1):after {
-  top: 63px;
-  left: 63px;
-}
-.lds-roller div:nth-child(2) {
-  animation-delay: -0.072s;
-}
-.lds-roller div:nth-child(2):after {
-  top: 68px;
-  left: 56px;
-}
-.lds-roller div:nth-child(3) {
-  animation-delay: -0.108s;
-}
-.lds-roller div:nth-child(3):after {
-  top: 71px;
-  left: 48px;
-}
-.lds-roller div:nth-child(4) {
-  animation-delay: -0.144s;
-}
-.lds-roller div:nth-child(4):after {
-  top: 72px;
-  left: 40px;
-}
-.lds-roller div:nth-child(5) {
-  animation-delay: -0.18s;
-}
-.lds-roller div:nth-child(5):after {
-  top: 71px;
-  left: 32px;
-}
-.lds-roller div:nth-child(6) {
-  animation-delay: -0.216s;
-}
-.lds-roller div:nth-child(6):after {
-  top: 68px;
-  left: 24px;
-}
-.lds-roller div:nth-child(7) {
-  animation-delay: -0.252s;
-}
-.lds-roller div:nth-child(7):after {
-  top: 63px;
-  left: 17px;
-}
-.lds-roller div:nth-child(8) {
-  animation-delay: -0.288s;
-}
-.lds-roller div:nth-child(8):after {
-  top: 56px;
-  left: 12px;
-}
-@keyframes lds-roller {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-```
+import axios from 'axios';
 
-.src/css/spinner.css
-```
-#margen {
-  margin: 100px;
-}
+import { TRAER_TODOS, CARGANDO, ERROR } from '../types/usersTipes'
 
-.tabla {
-  width: 100%;
-  text-align: left;
-}
+export const traerTodos = () => async (dispatch) => {
 
-.tabla td {
-  padding-top: 10px;
-  padding-bottom: 10px;
-}
+	dispatch({
+		type: CARGANDO
+	});
 
-#menu {
-  background-color: #253a46;
-  padding: 20px;
-  font-size: 20px;
-}
+	try {
+		const response =await axios.get('https://jsonplaceholder.typicode.com/userss');
 
-#menu a {
-  color: white;
-  padding-right: 50px;
-}
-
-body {
-  margin: 0;
-}
-
-.center{
-	text-align: center;
+		dispatch({
+			type: TRAER_TODOS,
+			payload: response.data
+		})
+	}catch (error){
+		console.log('Error: ', error.message);
+		dispatch({
+			type: ERROR,
+			payload: 'Algo salió mal, intente mas tarde.'
+		})
+	}
 }
 ```

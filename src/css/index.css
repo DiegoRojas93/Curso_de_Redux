@@ -30,3 +30,11 @@ body {
 .center{
 	text-align: center;
 }
+
+.rojo {
+  color: red;
+}
+
+.black {
+  color: black;
+}

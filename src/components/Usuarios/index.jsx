@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 import * as usuariosActions from '../../actions/usuariosActions';
 
 import Spinner from '../General/Spinner'
+import NotFound from '../General/NotFound'
 
 class Usuarios extends Component{
 
@@ -16,27 +17,33 @@ class Usuarios extends Component{
   ponerContenido = () => {
 
     if(this.props.cargando){
-      return < Spinner/>;
+      return <Spinner />;
     }
+
+    if(this.props.error){
+      return <NotFound mensaje={this.props.error}/>;
+    }
+
+
     return (
       <table className="tabla">
-          <thead>
-            <tr>
-              <th>
-                Nombre
-              </th>
-              <th>
-                Correo
-              </th>
-              <th>
-                Enlace
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            { this.ponerFilas() }
-          </tbody>
-        </table>
+        <thead>
+          <tr>
+            <th>
+              Nombre
+            </th>
+            <th>
+              Correo
+            </th>
+            <th>
+              Enlace
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          { this.ponerFilas() }
+        </tbody>
+      </table>
     )
   }
 
@@ -63,7 +70,7 @@ class Usuarios extends Component{
 
     return(
       <div>
-       { this.ponerContenido() }
+        { this.ponerContenido() }
       </div>
     )
   }
