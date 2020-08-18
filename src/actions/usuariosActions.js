@@ -9,7 +9,7 @@ export const traerTodos = () => async (dispatch) => {
 	});
 
 	try {
-		const response =await axios.get('https://jsonplaceholder.typicode.com/userss');
+		const response =await axios.get('https://jsonplaceholder.typicode.com/users');
 
 		dispatch({
 			type: TRAER_TODOS,
