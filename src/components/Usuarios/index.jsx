@@ -12,7 +12,9 @@ class Usuarios extends Component{
 
   componentDidMount() {
 
-    this.props.traerTodos();
+    if(!this.props.usuarios.lenght){
+      this.props.traerTodos();
+    }
   }
 
   ponerContenido = () => {
@@ -32,8 +34,7 @@ class Usuarios extends Component{
 
   render(){
 
-    console.log(this.props.cargando);
-    console.log(this.props.error);
+    console.log(this.props);
 
     return(
       <div>

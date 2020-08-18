@@ -6,45 +6,50 @@
 
 A partir de este módulo aprenderemos a usar Redux de una forma más avanzada, como lo es compartir recucers, comprender la inmutabilidad, actualizar información dinámicamente y manejar diferentes ***reducers.***
 
-#### Uso del estado en la acción
+#### Evitar segundas búsquedas
 
-Ahora lo que vamos hacer ya traido el usuario, es traer todas las publicaciones del ususario escogido.
+Hay un problema, cuando buscamos un usuario para ver sus publicaciones y luego nos devolvemos en la pagina para buscar las publicaciones de otro usuario, **En el reducer se van a sobreescribir las publicaciones de la busqueda anterior.**
 
+Para evitarlo debemos hacer lo siguiente:
 
-.src/components/reducers/ususariosReducer.js
+.src/actions/publicacionesActions.js
 ```
-import { TRAER_TODOS, CARGANDO, ERROR } from '../types/usersTipes'
+import axios from 'axios';
 
-const INITIAL_STATE = {
-	usuarios: [],
-	cargando: false,
-	error: ''
-};
+import { TRAER_POR_USUARIO, CARGANDO, ERROR } from '../types/publicacionesTipes'
 
-export default ( state = INITIAL_STATE, action) => {
-	switch (action.type) {
-		case TRAER_TODOS:
-			return {
-				...state,
-				usuarios: action.payload,
-				cargando: false,
-				error: ''
-			}
+export const traerPorUsuario = (key) => async (dispatch,getState) => {
 
-		case CARGANDO:
-			return { ...state, cargando: true}
+	const { usuarios } = getState().usuariosReducer;
+	const { publicaciones } = getState().publicacionesReducer;
 
-		case ERROR:
-			return { ...state, error: action.payload, cargando: false}
+	const usuario_id = usuarios[key].id;
 
-		default: return state;
-	}
+	const response = await axios.get(`https://jsonplaceholder.typicode.com/posts?userId=${usuario_id}`)
+
+	const publicaciones_actualizadas = [
+		...publicaciones,
+		response.data
+	];
+
+
+	dispatch({
+		type: TRAER_POR_USUARIO,
+		payload: publicaciones_actualizadas
+	})
 }
 ```
 
-.src/components/reducers/publicacionesReducers.js
+.src/types/publicacionesTipes.js
 ```
-import { TRAER_TODOS, CARGANDO, ERROR } from '../types/publicacionesTipes'
+export const TRAER_POR_USUARIO = `publicaciones_traer_por_usuario`;
+export const CARGANDO = `publicaciones_cargando`;
+export const ERROR = `publicaciones_error`;
+```
+
+.src/reducer/reducers/PublicacionesReducers.js
+```
+import { TRAER_POR_USUARIO, CARGANDO, ERROR } from '../types/publicacionesTipes'
 
 const INITIAL_STATE = {
 	publicaciones: [],
@@ -55,7 +60,7 @@ const INITIAL_STATE = {
 export default ( state = INITIAL_STATE, action) => {
 	switch (action.type) {
 
-		case TRAER_TODOS:
+		case TRAER_POR_USUARIO:
 			return {
 				...state,
 				publicaciones: action.payload,
@@ -74,95 +79,60 @@ export default ( state = INITIAL_STATE, action) => {
 }
 ```
 
-Esta parte es muy inportante debido a que podemos pasar el key del ususario que escogimos para poder llamar la data (en este caso la publicaciones hechas por el ususario)
-
-./src/actions/publicacionesActions.js
+.src/components/Usuarios/index.js
 ```
-import axios from 'axios';
+import React, { Component } from 'react';
 
-import { TRAER_TODOS, CARGANDO, ERROR } from '../types/publicacionesTipes'
+import { connect } from 'react-redux';
 
-export const traerTodos = () => async (dispatch) => {
+import * as usuariosActions from '../../actions/usuariosActions';
 
-	dispatch({
-		type: CARGANDO
-	})
+import Spinner from '../General/Spinner'
+import NotFound from '../General/NotFound'
+import Tabla from './Tabla'
 
-	try {
-		const response = await axios.get('https://jsonplaceholder.typicode.com/posts')
+class Usuarios extends Component{
 
-		dispatch({
-			type: TRAER_TODOS,
-			payload: response.data
-		})
-	} catch (error) {
-		console.log(`Error`, error.massage);
-		dispatch({
-			type: ERROR,
-			payload: 'Algo salió mal, intente más tarde.'
-		})
-	}
+  componentDidMount() {
+
+    if(!this.props.usuarios.lenght){
+      this.props.traerTodos();
+    }
+  }
+
+  ponerContenido = () => {
+
+    if(this.props.cargando){
+      return <Spinner />;
+    }
+
+    if(this.props.error){
+      return <NotFound mensaje={this.props.error}/>;
+    }
+
+    return <Tabla />
+
+  }
+
+
+  render(){
+
+    console.log(this.props);
+
+    return(
+      <div>
+        <h1>Usuarios</h1>
+        { this.ponerContenido() }
+      </div>
+    )
+  }
 }
 
-export const traerPorUsuario = (key) => async (dispatch,getState) => {
+const mapStateToProps = (reducers) => {
+  return reducers.usuariosReducer;
+};
 
-	const { usuarios } = getState().usuariosReducer;
+// export default connect({Todos los reducers que se necesitaran}, {/Actions})(Usuarios);
 
-	const usuario_id = usuarios[key].id;
-
-	const response = await axios.get(`https://jsonplaceholder.typicode.com/posts?userId=${usuario_id}`)
-
-	dispatch({
-			type: TRAER_TODOS,
-			payload: response.data
-		})
-}
-```
-
-.src/components/Publicaciones/index.js
-```
-import React, { Component } from 'react'
-import { connect } from 'react-redux'
-
-import * as usuariosActions from '../../actions/usuariosActions'
-import * as publicacionesActions from '../../actions/publicacionesActions'
-
-
-const { traerTodos: usuariosTraerTodos} = usuariosActions;
-const { traerPorUsuario: publicacionesTraerPorUsuario} = publicacionesActions;
-
-class Publicaciones extends Component {
-
-	async componentDidMount(){
-		if(!this.props.usuariosReducer.usuarios.lenght){
-			await this.props.usuariosTraerTodos();
-		}
-
-		this.props.publicacionesTraerPorUsuario(this.props.match.params.key);
-	}
-
-	render() {
-		console.log(this.props);
-		return (
-			<div>
-				<h1>Publicaciones de</h1>
-				{ this.props.match.params.key }
-			</div>
-		)
-	}
-}
-
-const mapStateToProps = ({usuariosReducer, publicacionesReducer}) => {
-	return {
-		usuariosReducer,
-		publicacionesReducer
-	}
-}
-
-const mapDispatchToProps = {
-	usuariosTraerTodos,
-	publicacionesTraerPorUsuario
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(Publicaciones);
+export default connect(mapStateToProps, usuariosActions)(Usuarios);
 ```
