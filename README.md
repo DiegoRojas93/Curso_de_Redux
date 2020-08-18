@@ -6,17 +6,20 @@
 
 A partir de este módulo aprenderemos a usar Redux de una forma más avanzada, como lo es compartir recucers, comprender la inmutabilidad, actualizar información dinámicamente y manejar diferentes ***reducers.***
 
-#### Evitar segundas búsquedas
+#### [Inmutabilidad](https://medium.com/@khriztianmoreno/qu%C3%A9-es-la-inmutabilidad-263bdfe3fa1b "Inmutabilidad")
 
-Hay un problema, cuando buscamos un usuario para ver sus publicaciones y luego nos devolvemos en la pagina para buscar las publicaciones de otro usuario, **En el reducer se van a sobreescribir las publicaciones de la busqueda anterior.**
+Hasta este momento ya podemos ir a trear nuestras publicaciones y añadirlas al arreglo de publicaciones que tenemos ahorita para convertir un arreglo de arreglos.
 
-Para evitarlo debemos hacer lo siguiente:
+Lo que nos falta ahora es una vez que trajimos esas publicaciones, Decirle al usuariosReducer. "Tus publicaciones están en este en esta casilla del arreglo, que es lo que vamos a ver acontinuación"
 
 .src/actions/publicacionesActions.js
 ```
 import axios from 'axios';
 
-import { TRAER_POR_USUARIO, CARGANDO, ERROR } from '../types/publicacionesTipes'
+import { TRAER_POR_USUARIO, CARGANDO, ERROR } from '../types/publicacionesTipes';
+import * as usuariosTypes from '../types/usersTipes';
+
+const { TRAER_TODOS: USUARIOS_TRAER_TODOS } = usuariosTypes;
 
 export const traerPorUsuario = (key) => async (dispatch,getState) => {
 
@@ -32,107 +35,23 @@ export const traerPorUsuario = (key) => async (dispatch,getState) => {
 		response.data
 	];
 
+	const publicaciones_key = publicaciones_actualizadas.length -1;
+
+	const usuarios_actualizados = [...usuarios];
+
+	usuarios_actualizados[key] = {
+		...usuarios[key],
+		publicaciones_key
+	}
+
+	dispatch({
+		type: USUARIOS_TRAER_TODOS,
+		payload: usuarios_actualizados
+	})
 
 	dispatch({
 		type: TRAER_POR_USUARIO,
 		payload: publicaciones_actualizadas
 	})
 }
-```
-
-.src/types/publicacionesTipes.js
-```
-export const TRAER_POR_USUARIO = `publicaciones_traer_por_usuario`;
-export const CARGANDO = `publicaciones_cargando`;
-export const ERROR = `publicaciones_error`;
-```
-
-.src/reducer/reducers/PublicacionesReducers.js
-```
-import { TRAER_POR_USUARIO, CARGANDO, ERROR } from '../types/publicacionesTipes'
-
-const INITIAL_STATE = {
-	publicaciones: [],
-	cargando: false,
-	error: ''
-};
-
-export default ( state = INITIAL_STATE, action) => {
-	switch (action.type) {
-
-		case TRAER_POR_USUARIO:
-			return {
-				...state,
-				publicaciones: action.payload,
-				cargando: false,
-				error: ''
-			}
-
-		case CARGANDO:
-			return { ...state, cargando: true}
-
-		case ERROR:
-			return { ...state, error: action.payload, cargando: false}
-
-		default: return state;
-	}
-}
-```
-
-.src/components/Usuarios/index.js
-```
-import React, { Component } from 'react';
-
-import { connect } from 'react-redux';
-
-import * as usuariosActions from '../../actions/usuariosActions';
-
-import Spinner from '../General/Spinner'
-import NotFound from '../General/NotFound'
-import Tabla from './Tabla'
-
-class Usuarios extends Component{
-
-  componentDidMount() {
-
-    if(!this.props.usuarios.lenght){
-      this.props.traerTodos();
-    }
-  }
-
-  ponerContenido = () => {
-
-    if(this.props.cargando){
-      return <Spinner />;
-    }
-
-    if(this.props.error){
-      return <NotFound mensaje={this.props.error}/>;
-    }
-
-    return <Tabla />
-
-  }
-
-
-  render(){
-
-    console.log(this.props);
-
-    return(
-      <div>
-        <h1>Usuarios</h1>
-        { this.ponerContenido() }
-      </div>
-    )
-  }
-}
-
-const mapStateToProps = (reducers) => {
-  return reducers.usuariosReducer;
-};
-
-// export default connect({Todos los reducers que se necesitaran}, {/Actions})(Usuarios);
-
-export default connect(mapStateToProps, usuariosActions)(Usuarios);
 ```
