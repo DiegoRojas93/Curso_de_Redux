@@ -6,13 +6,11 @@
 
 A partir de este módulo aprenderemos a usar Redux de una forma más avanzada, como lo es compartir recucers, comprender la inmutabilidad, actualizar información dinámicamente y manejar diferentes ***reducers.***
 
-#### Modificando respuesta de url
+#### Estado con interacción
 
-Ya que sabemos de qué publicacion vamos a traer los comentarios.
+Por ahora lo que estamos viendo es que nuestro componente esta enviando al actionCreator el key de publicaciones y el key que vamos a traer,
 
-Ahora vamos a hacerlo de una manera diferente. Por ahorita lo  que tenemos es un usuariosReducer y publicacionesReducer, en donde le decimos al ususario que en cierta casilla estan sus publicaciones.
-
-En esta nueva manera los que vamos a hacer es que es sus publicaciones se le añadiran sus comentarios de forma dinamica.
+Ahora lo que vamos a hacer, es que al hacer click a los comentarios o publicaciones del usuario, nos aparezca que esta abierto o cerrado.
 
 .src/components/Publicaciones/index.js
 ```
@@ -116,6 +114,9 @@ class Publicaciones extends Component {
 				<h3>
 					{ publicacion.body }
 				</h3>
+				{
+					(publicacion.abierto) ? 'abierto' : 'cerrado'
+				}
 			</div>
 		))
 	);
@@ -143,40 +144,13 @@ const mapDispatchToProps = {
 export default connect(mapStateToProps, mapDispatchToProps)(Publicaciones);
 ```
 
-./src/actions/usuariosActions.js
-```
-import axios from 'axios';
-import { TRAER_TODOS, CARGANDO, ERROR } from '../types/usuariosTypes';
-
-export const traerTodos = () => async (dispatch) => {
-	dispatch({
-		type: CARGANDO
-	});
-
-	try {
-		const respuesta = await axios.get('https://jsonplaceholder.typicode.com/users');
-		dispatch({
-			type: TRAER_TODOS,
-			payload: respuesta.data
-		})
-	}
-	catch (error) {
-		console.log(error.message);
-		dispatch({
-			type: ERROR,
-			payload: 'Información de usuario no disponible'
-		})
-	}
-};
-```
-
 ./src/actions/publicacionesActions.js
 ```
 import axios from 'axios';
 import {
 	CARGANDO,
 	ERROR,
-	TRAER_POR_USUARIO
+	ACTUALIZAR
 } from '../types/publicacionesTypes';
 import * as usuariosTypes from '../types/usuariosTypes';
 
@@ -207,7 +181,7 @@ export const traerPorUsuario = (key) => async (dispatch, getState) => {
 		];
 
 		dispatch({
-			type: TRAER_POR_USUARIO,
+			type: ACTUALIZAR,
 			payload: publicaciones_actualizadas
 		});
 
@@ -222,6 +196,7 @@ export const traerPorUsuario = (key) => async (dispatch, getState) => {
 			type: USUARIOS_TRAER_TODOS,
 			payload: usuarios_actualizados
 		});
+
 	} catch (error) {
 		console.log(error.message);
 
@@ -233,7 +208,68 @@ export const traerPorUsuario = (key) => async (dispatch, getState) => {
 
 };
 
-export const abrirCerrar = (pub_key, com_key) => (dispatch) => {
-	console.log(pub_key, com_key);
+export const abrirCerrar = (pub_key, com_key) => (dispatch,getState) => {
+
+	const { publicaciones} = getState().publicacionesReducer;
+	const seleccionada = publicaciones[pub_key][com_key];
+
+	const actualizada = {
+		...seleccionada,
+		abierto: !seleccionada.abierto
+	}
+
+	const publicaciones_actualizadas = [ ...publicaciones ];
+	publicaciones_actualizadas[pub_key] = [
+		...publicaciones[pub_key]
+	];
+
+	publicaciones_actualizadas[pub_key][com_key] = actualizada;
+
+	dispatch({
+		type: ACTUALIZAR,
+		payload: publicaciones_actualizadas
+	});
 }
+```
+
+.src/reducers/publicacionesReducers.js
+```
+import {
+	CARGANDO,
+	ERROR,
+	ACTUALIZAR
+} from '../types/publicacionesTypes';
+
+const INITIAL_STATE = {
+	publicaciones: [],
+	cargando: false,
+	error: ''
+};
+
+export default (state = INITIAL_STATE, action) => {
+	switch (action.type) {
+		case ACTUALIZAR:
+			return {
+				...state,
+				publicaciones: action.payload,
+				cargando: false,
+				error: ''
+			};
+
+		case CARGANDO:
+			return { ...state, cargando: true };
+
+		case ERROR:
+			return { ...state, error: action.payload, cargando: false };
+
+		default: return state;
+	};
+};
+```
+
+.src/types/publicacionesTypes.js
+```
+export const ACTUALIZAR = 'publicaciones_actualizar';
+export const CARGANDO = 'publicaciones_cargando';
+export const ERROR = 'publicaciones_error';
 ```
