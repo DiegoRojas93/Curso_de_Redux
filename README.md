@@ -6,9 +6,11 @@
 
 A partir de este módulo aprenderemos a usar Redux de una forma más avanzada, como lo es compartir recucers, comprender la inmutabilidad, actualizar información dinámicamente y manejar diferentes ***reducers.***
 
-#### Validación compuesta
+#### Modificando respuesta de url
 
-Ya podemos ver las publicaciones del usuario en la consola, lo que hace falta es desplicar sus publicaciones en la pantalla.
+La consola del navegador nos arrojo una alerta, debido a que como estamos renderizando codigo por medio de un map, react nos sugiere que para hacer una lista debemos poner un key a map para cada iteracion.
+
+Tambien vamos a modificar el código para saber de qué publicacion vamos a traer los comentarios.
 
 .src/components/Publicaciones/index.js
 ```
@@ -94,7 +96,11 @@ class Publicaciones extends Component {
 		const{ publicaciones_key } = usuarios[key];
 
 		return publicaciones[publicaciones_key].map((publicacion) => (
-			<div className="pub_titulo">
+			<div
+				className="pub_titulo"
+				key= { publicacion.id }
+				onClick={ ()=>alert(publicacion.id) }
+				>
 				<h2>
 					{ publicacion.title }
 				</h2>
@@ -128,47 +134,86 @@ const mapDispatchToProps = {
 export default connect(mapStateToProps, mapDispatchToProps)(Publicaciones);
 ```
 
-./src/css/index.css
+./src/actions/usuariosActions.js
 ```
-#margen {
-	margin: 100px;
-	margin-top: 50px;
-}
+import axios from 'axios';
+import { TRAER_TODOS, CARGANDO, ERROR } from '../types/usuariosTypes';
 
-.tabla {
-	width: 100%;
-	text-align: left;
-}
+export const traerTodos = () => async (dispatch) => {
+	dispatch({
+		type: CARGANDO
+	});
 
-.tabla td {
-	padding-top: 10px;
-	padding-bottom: 10px;
-}
+	try {
+		const respuesta = await axios.get('https://jsonplaceholder.typicode.com/users');
+		dispatch({
+			type: TRAER_TODOS,
+			payload: respuesta.data
+		})
+	}
+	catch (error) {
+		console.log(error.message);
+		dispatch({
+			type: ERROR,
+			payload: 'Información de usuario no disponible'
+		})
+	}
+};
+```
 
-#menu {
-	background-color: #253A46;
-	padding: 20px;
-	font-size: 20px;
-}
+./src/actions/publicacionesActions.js
+```
+import axios from 'axios';
+import {
+	CARGANDO,
+	ERROR,
+	TRAER_POR_USUARIO
+} from '../types/publicacionesTypes';
+import * as usuariosTypes from '../types/usuariosTypes';
 
-#menu a {
-	color: white;
-	padding-right: 50px;
-}
+const { TRAER_TODOS: USUARIOS_TRAER_TODOS } = usuariosTypes;
 
-body {
-	margin: 0;
-}
+export const traerPorUsuario = (key) => async (dispatch, getState) => {
 
-.center {
-	text-align: center;
-}
+	dispatch({
+		type: CARGANDO
+	});
 
-.rojo {
-	color: red;
-}
+	const { usuarios } = getState().usuariosReducer;
+	const { publicaciones } = getState().publicacionesReducer;
+	const usuario_id = usuarios[key].id;
 
-.pub_titulo {
-	border-top: 1px solid black;
-}
+	try {
+		const respuesta = await axios.get(`https://jsonplaceholder.typicode.com/posts?userId=${usuario_id}`);
+		const publicaciones_actualizadas = [
+			...publicaciones,
+			respuesta.data
+		];
+
+		dispatch({
+			type: TRAER_POR_USUARIO,
+			payload: publicaciones_actualizadas
+		});
+
+		const publicaciones_key = publicaciones_actualizadas.length - 1;
+		const usuarios_actualizados = [...usuarios];
+		usuarios_actualizados[key] = {
+			...usuarios[key],
+			publicaciones_key
+		}
+
+		dispatch({
+			type: USUARIOS_TRAER_TODOS,
+			payload: usuarios_actualizados
+		});
+	} catch (error) {
+		console.log(error.message);
+
+		dispatch({
+			type: ERROR,
+			payload: 'publicaciones no disponibles'
+		})
+	}
+
+};
 ```
