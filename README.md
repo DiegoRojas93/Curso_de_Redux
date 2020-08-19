@@ -6,52 +6,84 @@
 
 A partir de este módulo aprenderemos a usar Redux de una forma más avanzada, como lo es compartir recucers, comprender la inmutabilidad, actualizar información dinámicamente y manejar diferentes ***reducers.***
 
-#### [Inmutabilidad](https://medium.com/@khriztianmoreno/qu%C3%A9-es-la-inmutabilidad-263bdfe3fa1b "Inmutabilidad")
+#### Evitar la sobrescritura
 
-Hasta este momento ya podemos ir a trear nuestras publicaciones y añadirlas al arreglo de publicaciones que tenemos ahorita para convertir un arreglo de arreglos.
+Lo que vamos a hacer es corregir la sobre escritura que se esta presentando en este momento, y ademas de poner el spinner y la págande de NotFound.
 
-Lo que nos falta ahora es una vez que trajimos esas publicaciones, Decirle al usuariosReducer. "Tus publicaciones están en este en esta casilla del arreglo, que es lo que vamos a ver acontinuación"
-
-.src/actions/publicacionesActions.js
+.src/components/Publicaciones/index.js
 ```
-import axios from 'axios';
+import React, { Component } from 'react';
+import { connect } from 'react-redux';
+import Spinner from '../General/Spinner';
+import Fatal from '../General/Fatal';
 
-import { TRAER_POR_USUARIO, CARGANDO, ERROR } from '../types/publicacionesTipes';
-import * as usuariosTypes from '../types/usersTipes';
+import * as usuariosActions from '../../actions/usuariosActions';
+import * as publicacionesActions from '../../actions/publicacionesActions';
 
-const { TRAER_TODOS: USUARIOS_TRAER_TODOS } = usuariosTypes;
+const { traerTodos: usuariosTraerTodos } = usuariosActions;
+const { traerPorUsuario: publicacionesTraerPorUsuario } = publicacionesActions;
 
-export const traerPorUsuario = (key) => async (dispatch,getState) => {
+class Publicaciones extends Component {
 
-	const { usuarios } = getState().usuariosReducer;
-	const { publicaciones } = getState().publicacionesReducer;
+	async componentDidMount() {
+		const {
+			usuariosTraerTodos,
+			match: { params: { key } },
+			publicacionesTraerPorUsuario
+		} = this.props;
 
-	const usuario_id = usuarios[key].id;
-
-	const response = await axios.get(`https://jsonplaceholder.typicode.com/posts?userId=${usuario_id}`)
-
-	const publicaciones_actualizadas = [
-		...publicaciones,
-		response.data
-	];
-
-	const publicaciones_key = publicaciones_actualizadas.length -1;
-
-	const usuarios_actualizados = [...usuarios];
-
-	usuarios_actualizados[key] = {
-		...usuarios[key],
-		publicaciones_key
+		if (!this.props.usuariosReducer.usuarios.length) {
+			await usuariosTraerTodos();
+		}
+		if (this.props.usuariosReducer.error) {
+			return;
+		}
+		if (!('publicaciones_key' in this.props.usuariosReducer.usuarios[key])) {
+			await publicacionesTraerPorUsuario(key);
+		}
 	}
 
-	dispatch({
-		type: USUARIOS_TRAER_TODOS,
-		payload: usuarios_actualizados
-	})
+	ponerUsuario = () => {
+		const {
+			match: { params: { key } },
+			usuariosReducer
+		} = this.props;
 
-	dispatch({
-		type: TRAER_POR_USUARIO,
-		payload: publicaciones_actualizadas
-	})
+		if (usuariosReducer.error) {
+			return <Fatal mensaje={ usuariosReducer.error } />;
+		}
+		if (!usuariosReducer.usuarios.length || usuariosReducer.cargando) {
+			return <Spinner />
+	}
+
+		const nombre = usuariosReducer.usuarios[key].name;
+
+		return (
+			<h1>
+				Publicaciones de { nombre }
+			</h1>
+		);
+	};
+
+	render() {
+		console.log(this.props);
+		return (
+			<div>
+				{ this.ponerUsuario() }
+				{ this.props.match.params.key }
+			</div>
+		);
+	}
 }
+
+const mapStateToProps = ({ usuariosReducer, publicacionesReducer }) => {
+	return { usuariosReducer, publicacionesReducer };
+};
+
+const mapDispatchToProps = {
+	usuariosTraerTodos,
+	publicacionesTraerPorUsuario
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(Publicaciones);
 ```

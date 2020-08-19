@@ -1,20 +1,19 @@
 import React from 'react';
-import { Link } from 'react-router-dom'
-
-import { connect } from 'react-redux'
+import { connect } from 'react-redux';
+import { Link } from 'react-router-dom';
 
 const Tabla = (props) => {
 
 	const ponerFilas = () => props.usuarios.map((usuario, key) => (
-		<tr key={usuario.id}>
+		<tr key={ usuario.id }>
 			<td>
-				{usuario.name}
+				{ usuario.name }
 			</td>
 			<td>
-				{usuario.email}
+				{ usuario.email }
 			</td>
 			<td>
-				{usuario.website}
+				{ usuario.website }
 			</td>
 			<td>
 				<Link to={ `/publicaciones/${key}` }>
@@ -25,31 +24,29 @@ const Tabla = (props) => {
 	));
 
 	return (
-		<div>
 		<table className="tabla">
-        <thead>
-          <tr>
-            <th>
-              Nombre
-            </th>
-            <th>
-              Correo
-            </th>
-            <th>
-              Enlace
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          { ponerFilas() }
-        </tbody>
-      </table>
-	</div>
+			<thead>
+				<tr>
+					<th>
+						Nombre
+					</th>
+					<th>
+						Correo
+					</th>
+					<th>
+						Enlace
+					</th>
+				</tr>
+			</thead>
+			<tbody>
+				{ ponerFilas() }
+			</tbody>
+		</table>
 	)
 }
 
 const mapStateToProps = (reducers) => {
-	return reducers.usuariosReducer
-}
+	return reducers.usuariosReducer;
+};
 
-export default connect(mapStateToProps)(Tabla)
+export default connect(mapStateToProps)(Tabla);

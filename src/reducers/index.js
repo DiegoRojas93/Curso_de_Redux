@@ -1,8 +1,8 @@
 import { combineReducers } from 'redux';
 import usuariosReducer from './usuariosReducer';
-import publicacionesReducer from './PublicacionesReducer';
+import publicacionesReducer from './publicacionesReducer';
 
-export default combineReducers ({
+export default combineReducers({
 	usuariosReducer,
 	publicacionesReducer
-})
+});

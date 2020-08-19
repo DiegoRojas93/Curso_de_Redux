@@ -4,23 +4,21 @@ import './css/index.css';
 import './css/iconos.css';
 import App from './components/App';
 
-import {createStore, applyMiddleware } from 'redux';
 import { Provider } from 'react-redux';
+import { createStore, applyMiddleware } from 'redux';
 import reduxThunk from 'redux-thunk';
 
-import reducers from './reducers/index'
+import reducers from './reducers';
 
-const store = createStore (
-  reducers, // Todos los reducers
-  {},       // Estado inicial
-  applyMiddleware(reduxThunk)
-)
+const store = createStore(
+	reducers, // Reducers
+	{}, // Estado inicial
+	applyMiddleware(reduxThunk)
+);
 
 ReactDOM.render(
-  <React.StrictMode>
-    <Provider store={store} > {/* Intenta proveer un almacenamiento al container APP, es decir que sú store es igual a la constante store ya creada*/}
-      <App />
-    </Provider>
-  </React.StrictMode>,
-  document.getElementById('root')
+	<Provider store={ store }>
+		<App />
+	</Provider>,
+	document.getElementById('root')
 );
