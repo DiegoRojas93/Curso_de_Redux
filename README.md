@@ -8,9 +8,11 @@ A partir de este módulo aprenderemos a usar Redux de una forma más avanzada, c
 
 #### Modificando respuesta de url
 
-La consola del navegador nos arrojo una alerta, debido a que como estamos renderizando codigo por medio de un map, react nos sugiere que para hacer una lista debemos poner un key a map para cada iteracion.
+Ya que sabemos de qué publicacion vamos a traer los comentarios.
 
-Tambien vamos a modificar el código para saber de qué publicacion vamos a traer los comentarios.
+Ahora vamos a hacerlo de una manera diferente. Por ahorita lo  que tenemos es un usuariosReducer y publicacionesReducer, en donde le decimos al ususario que en cierta casilla estan sus publicaciones.
+
+En esta nueva manera los que vamos a hacer es que es sus publicaciones se le añadiran sus comentarios de forma dinamica.
 
 .src/components/Publicaciones/index.js
 ```
@@ -23,7 +25,7 @@ import * as usuariosActions from '../../actions/usuariosActions';
 import * as publicacionesActions from '../../actions/publicacionesActions';
 
 const { traerTodos: usuariosTraerTodos } = usuariosActions;
-const { traerPorUsuario: publicacionesTraerPorUsuario } = publicacionesActions;
+const { traerPorUsuario: publicacionesTraerPorUsuario, abrirCerrar } = publicacionesActions;
 
 class Publicaciones extends Component {
 
@@ -95,11 +97,18 @@ class Publicaciones extends Component {
 
 		const{ publicaciones_key } = usuarios[key];
 
-		return publicaciones[publicaciones_key].map((publicacion) => (
+		return this.mostrarInfo(
+			publicaciones[publicaciones_key],
+			publicaciones_key
+		)
+	}
+
+	mostrarInfo = (publicaciones, pub_key) => (
+		publicaciones.map((publicacion, com_key) => (
 			<div
 				className="pub_titulo"
 				key= { publicacion.id }
-				onClick={ ()=>alert(publicacion.id) }
+				onClick={ () => this.props.abrirCerrar(pub_key, com_key) }
 				>
 				<h2>
 					{ publicacion.title }
@@ -109,8 +118,7 @@ class Publicaciones extends Component {
 				</h3>
 			</div>
 		))
-	}
-
+	);
 	render() {
 		console.log(this.props);
 		return (
@@ -128,7 +136,8 @@ const mapStateToProps = ({ usuariosReducer, publicacionesReducer }) => {
 
 const mapDispatchToProps = {
 	usuariosTraerTodos,
-	publicacionesTraerPorUsuario
+	publicacionesTraerPorUsuario,
+	abrirCerrar
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(Publicaciones);
@@ -185,9 +194,16 @@ export const traerPorUsuario = (key) => async (dispatch, getState) => {
 
 	try {
 		const respuesta = await axios.get(`https://jsonplaceholder.typicode.com/posts?userId=${usuario_id}`);
+
+		const nuevas = respuesta.data.map((publicacion) => ({
+			...publicacion,
+			comentarios: [],
+			abierto: false
+		}))
+
 		const publicaciones_actualizadas = [
 			...publicaciones,
-			respuesta.data
+			nuevas
 		];
 
 		dispatch({
@@ -212,8 +228,12 @@ export const traerPorUsuario = (key) => async (dispatch, getState) => {
 		dispatch({
 			type: ERROR,
 			payload: 'publicaciones no disponibles'
-		})
+		});
 	}
 
 };
+
+export const abrirCerrar = (pub_key, com_key) => (dispatch) => {
+	console.log(pub_key, com_key);
+}
 ```
