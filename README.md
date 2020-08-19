@@ -6,9 +6,9 @@
 
 A partir de este módulo aprenderemos a usar Redux de una forma más avanzada, como lo es compartir recucers, comprender la inmutabilidad, actualizar información dinámicamente y manejar diferentes ***reducers.***
 
-#### Props por herencia vs estado
+#### Estado compartido
 
-Ahora lo que vamos a hacer, es que al hacer click a las publicaciones del usuario, aparezca un listado comentarios, esta seccion o clases es la continuacion de la anterior.
+Por ahora nos esta sirviendo que se desplegen los comentarios, pero lo que falta es que se muestre un error y se muestre cuando se esta cargando.
 
 .src/components/Publicaciones/index.js
 ```
@@ -162,11 +162,12 @@ import Spinner from '../General/Spinner';
 import Fatal from '../General/Fatal';
 
 const Comentarios = (props) => {
-	if (props.cargando) {
-		return <Spinner />
+	if (props.com_error) {
+		return <Fatal mensaje={ props.com_error } />
 	}
-	if (props.error) {
-		return <Fatal mensaje={ props.error } />
+
+	if (props.com_cargando && !props.comentarios.length) {
+		return <Spinner />
 	}
 
 	const ponerComentarios = () => (
@@ -202,8 +203,9 @@ import {
 	ACTUALIZAR,
 	CARGANDO,
 	ERROR,
+	COM_ERROR,
 	COM_CARGANDO,
-	COM_ERROR
+	COM_ACTUALIZAR
 } from '../types/publicacionesTypes';
 
 const INITIAL_STATE = {
@@ -227,6 +229,14 @@ export default (state = INITIAL_STATE, action) => {
 		case CARGANDO:
 			return { ...state, cargando: true };
 
+		case COM_ACTUALIZAR:
+			return {
+				...state,
+				publicaciones: action.payload,
+				com_cargando: false,
+				com_error: ''
+			};
+
 		case ERROR:
 			return { ...state, error: action.payload, cargando: false };
 
@@ -248,18 +258,22 @@ export const CARGANDO = 'publicaciones_cargando';
 export const ERROR = 'publicaciones_error';
 export const COM_CARGANDO = 'comentarios_cargando';
 export const COM_ERROR = 'comentarios_error';
+export const COM_ACTUALIZAR = 'comentarios_actualizar'
 ```
 
-.src/actions/publicacionesActions.js
+.src/actions/publicaciones.js
 ```
 import axios from 'axios';
+
 import {
+	ACTUALIZAR,
 	CARGANDO,
 	ERROR,
-	ACTUALIZAR,
+	COM_ERROR,
 	COM_CARGANDO,
-	COM_ERROR
+	COM_ACTUALIZAR
 } from '../types/publicacionesTypes';
+
 import * as usuariosTypes from '../types/usuariosTypes';
 
 const { TRAER_TODOS: USUARIOS_TRAER_TODOS } = usuariosTypes;
@@ -357,7 +371,7 @@ export const traerComentarios = (pub_key, com_key) => async (dispatch, getState)
 		publicaciones_actualizadas[pub_key][com_key] = actualizada;
 
 		dispatch({
-			type: ACTUALIZAR,
+			type: COM_ACTUALIZAR,
 			payload: publicaciones_actualizadas
 		});
 	}catch (error) {
@@ -368,4 +382,54 @@ export const traerComentarios = (pub_key, com_key) => async (dispatch, getState)
 		});
 	}
 };
+```
+
+.src/css/index.css
+```
+#margen {
+	margin: 100px;
+	margin-top: 50px;
+}
+
+.tabla {
+	width: 100%;
+	text-align: left;
+}
+
+.tabla td {
+	padding-top: 10px;
+	padding-bottom: 10px;
+}
+
+#menu {
+	background-color: #253A46;
+	padding: 20px;
+	font-size: 20px;
+}
+
+#menu a {
+	color: white;
+	padding-right: 50px;
+}
+
+body {
+	margin: 0;
+}
+
+.center {
+	text-align: center;
+}
+
+.rojo {
+	color: red;
+}
+
+.pub_titulo {
+	border-top: 1px solid black;
+	cursor: pointer;
+}
+
+li {
+	margin: 15px 0 15px 0;
+}
 ```
