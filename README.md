@@ -6,7 +6,7 @@
 
 A partir de este módulo aprenderemos a usar Redux de una forma más avanzada, como lo es compartir recucers, comprender la inmutabilidad, actualizar información dinámicamente y manejar diferentes ***reducers.***
 
-#### Llamadas asincronas dinámicas
+#### Props por herencia vs estado
 
 Ahora lo que vamos a hacer, es que al hacer click a las publicaciones del usuario, aparezca un listado comentarios, esta seccion o clases es la continuacion de la anterior.
 
@@ -25,7 +25,8 @@ const { traerTodos: usuariosTraerTodos } = usuariosActions;
 const {
 	traerPorUsuario: publicacionesTraerPorUsuario,
 	abrirCerrar,
-	traerComentarios} = publicacionesActions;
+	traerComentarios
+} = publicacionesActions;
 
 class Publicaciones extends Component {
 
@@ -49,8 +50,8 @@ class Publicaciones extends Component {
 
 	ponerUsuario = () => {
 		const {
-			usuariosReducer,
-			match: { params: { key } }
+			match: { params: { key } },
+			usuariosReducer
 		} = this.props;
 
 		if (usuariosReducer.error) {
@@ -70,7 +71,6 @@ class Publicaciones extends Component {
 	};
 
 	ponerPublicaciones = () => {
-
 		const {
 			usuariosReducer,
 			usuariosReducer: { usuarios },
@@ -80,38 +80,32 @@ class Publicaciones extends Component {
 		} = this.props;
 
 		if (!usuarios.length) return;
-
 		if (usuariosReducer.error) return;
-
 		if (publicacionesReducer.cargando) {
-			return <Spinner />
+			return <Spinner />;
 		}
-
 		if (publicacionesReducer.error) {
 			return <Fatal mensaje={ publicacionesReducer.error } />
 		}
-
 		if (!publicaciones.length) return;
-
 		if (!('publicaciones_key' in usuarios[key])) return;
 
-		const{ publicaciones_key } = usuarios[key];
-
+		const { publicaciones_key } = usuarios[key];
 		return this.mostrarInfo(
 			publicaciones[publicaciones_key],
 			publicaciones_key
-		)
-	}
+		);
+	};
 
 	mostrarInfo = (publicaciones, pub_key) => (
 		publicaciones.map((publicacion, com_key) => (
 			<div
-				className="pub_titulo"
-				key= { publicacion.id }
+				key={publicacion.id}
+				className='pub_titulo'
 				onClick={
-					() => this.mostarComentarios(pub_key, com_key, publicacion.comentarios)
-					}
-				>
+					() => this.mostrarComentarios(pub_key, com_key, publicacion.comentarios)
+				}
+			>
 				<h2>
 					{ publicacion.title }
 				</h2>
@@ -119,22 +113,24 @@ class Publicaciones extends Component {
 					{ publicacion.body }
 				</h3>
 				{
-					(publicacion.abierto) ? <Comentarios /> : ''
+					(publicacion.abierto) ?
+						<Comentarios
+							comentarios={ publicacion.comentarios }
+						/>
+						: ''
 				}
 			</div>
 		))
 	);
 
-	mostarComentarios = (pub_key, com_key, comentarios) => {
-		this.props.abrirCerrar(pub_key, com_key);
-
-		if(!comentarios.length){
-			this.props.traerComentarios(pub_key, com_key);
+	mostrarComentarios = (pub_key, com_key, comentarios) => {
+		this.props.abrirCerrar(pub_key, com_key)
+		if (!comentarios.length) {
+			this.props.traerComentarios(pub_key, com_key)
 		}
+	};
 
-	}
 	render() {
-		console.log(this.props);
 		return (
 			<div>
 				{ this.ponerUsuario() }
@@ -158,37 +154,132 @@ const mapDispatchToProps = {
 export default connect(mapStateToProps, mapDispatchToProps)(Publicaciones);
 ```
 
+.src/components/Publicaciones/Comentarios.js
+```
+import React from 'react';
+import { connect } from 'react-redux';
+import Spinner from '../General/Spinner';
+import Fatal from '../General/Fatal';
+
+const Comentarios = (props) => {
+	if (props.cargando) {
+		return <Spinner />
+	}
+	if (props.error) {
+		return <Fatal mensaje={ props.error } />
+	}
+
+	const ponerComentarios = () => (
+
+		props.comentarios.map((comentario) => (
+			<li key={ comentario.id }>
+				<b>
+					<u>
+						{ comentario.email }
+					</u>
+				</b>
+				<br />
+				{ comentario.body }
+			</li>
+		))
+	);
+
+	return (
+		<ul>
+			{ ponerComentarios() }
+		</ul>
+	);
+};
+
+const mapStateToProps = ({publicacionesReducer}) => publicacionesReducer;
+
+export default connect(mapStateToProps)(Comentarios);
+```
+
+.src/reducers/publicacionesReducers.js
+```
+import {
+	ACTUALIZAR,
+	CARGANDO,
+	ERROR,
+	COM_CARGANDO,
+	COM_ERROR
+} from '../types/publicacionesTypes';
+
+const INITIAL_STATE = {
+	publicaciones: [],
+	cargando: false,
+	error: '',
+	com_cargando: false,
+	com_error: ''
+};
+
+export default (state = INITIAL_STATE, action) => {
+	switch (action.type) {
+		case ACTUALIZAR:
+			return {
+				...state,
+				publicaciones: action.payload,
+				cargando: false,
+				error: ''
+			};
+
+		case CARGANDO:
+			return { ...state, cargando: true };
+
+		case ERROR:
+			return { ...state, error: action.payload, cargando: false };
+
+		case COM_CARGANDO:
+			return { ...state, com_cargando: true };
+
+		case COM_ERROR:
+			return { ...state, com_error: action.payload, com_cargando: false };
+
+		default: return state;
+	};
+};
+```
+
+.src/types/publicacionesTypes.js
+```
+export const ACTUALIZAR = 'publicaciones_actualizar';
+export const CARGANDO = 'publicaciones_cargando';
+export const ERROR = 'publicaciones_error';
+export const COM_CARGANDO = 'comentarios_cargando';
+export const COM_ERROR = 'comentarios_error';
+```
+
 .src/actions/publicacionesActions.js
 ```
 import axios from 'axios';
 import {
 	CARGANDO,
 	ERROR,
-	ACTUALIZAR
+	ACTUALIZAR,
+	COM_CARGANDO,
+	COM_ERROR
 } from '../types/publicacionesTypes';
 import * as usuariosTypes from '../types/usuariosTypes';
 
 const { TRAER_TODOS: USUARIOS_TRAER_TODOS } = usuariosTypes;
 
 export const traerPorUsuario = (key) => async (dispatch, getState) => {
-
 	dispatch({
 		type: CARGANDO
 	});
 
-	const { usuarios } = getState().usuariosReducer;
+	let { usuarios } = getState().usuariosReducer;
 	const { publicaciones } = getState().publicacionesReducer;
 	const usuario_id = usuarios[key].id;
 
 	try {
 		const respuesta = await axios.get(`https://jsonplaceholder.typicode.com/posts?userId=${usuario_id}`);
-
 		const nuevas = respuesta.data.map((publicacion) => ({
 			...publicacion,
 			comentarios: [],
 			abierto: false
-		}))
-
+		}));
 		const publicaciones_actualizadas = [
 			...publicaciones,
 			nuevas
@@ -204,68 +295,77 @@ export const traerPorUsuario = (key) => async (dispatch, getState) => {
 		usuarios_actualizados[key] = {
 			...usuarios[key],
 			publicaciones_key
-		}
+		};
 
 		dispatch({
 			type: USUARIOS_TRAER_TODOS,
 			payload: usuarios_actualizados
 		});
-
-	} catch (error) {
+	}
+	catch (error) {
 		console.log(error.message);
-
 		dispatch({
 			type: ERROR,
-			payload: 'publicaciones no disponibles'
+			payload: 'Publicaciones no disponibles.'
 		});
 	}
-
 };
 
-export const abrirCerrar = (pub_key, com_key) => (dispatch,getState) => {
-
-	const { publicaciones} = getState().publicacionesReducer;
+export const abrirCerrar = (pub_key, com_key) => (dispatch, getState) => {
+	const { publicaciones } = getState().publicacionesReducer;
 	const seleccionada = publicaciones[pub_key][com_key];
 
 	const actualizada = {
 		...seleccionada,
 		abierto: !seleccionada.abierto
-	}
+	};
 
-	const publicaciones_actualizadas = [ ...publicaciones ];
+	const publicaciones_actualizadas = [...publicaciones];
+
 	publicaciones_actualizadas[pub_key] = [
 		...publicaciones[pub_key]
 	];
-
 	publicaciones_actualizadas[pub_key][com_key] = actualizada;
 
 	dispatch({
 		type: ACTUALIZAR,
 		payload: publicaciones_actualizadas
 	});
-}
+};
 
 export const traerComentarios = (pub_key, com_key) => async (dispatch, getState) => {
-	const { publicaciones} = getState().publicacionesReducer;
+	dispatch({
+		type: COM_CARGANDO
+	});
+
+	const { publicaciones } = getState().publicacionesReducer;
 	const seleccionada = publicaciones[pub_key][com_key];
 
-	const respuesta = await axios.get(`https://jsonplaceholder.typicode.com/comments?postId=${seleccionada.id}`);
+	try {
+		const respuesta = await axios.get(`https://jsonplaceholder.typicode.com/comments?postId=${seleccionada.id}`)
 
-	const actualizada = {
-		...seleccionada,
-		comentarios: !respuesta.data
+		const actualizada = {
+			...seleccionada,
+			comentarios: respuesta.data
+		};
+
+		const publicaciones_actualizadas = [...publicaciones];
+
+		publicaciones_actualizadas[pub_key] = [
+			...publicaciones[pub_key]
+		];
+		publicaciones_actualizadas[pub_key][com_key] = actualizada;
+
+		dispatch({
+			type: ACTUALIZAR,
+			payload: publicaciones_actualizadas
+		});
+	}catch (error) {
+		console.log(error.message);
+		dispatch({
+			type: COM_ERROR,
+			payload: 'Comentarios no disponibles.'
+		});
 	}
-
-	const publicaciones_actualizadas = [ ...publicaciones ];
-	publicaciones_actualizadas[pub_key] = [
-		...publicaciones[pub_key]
-	];
-
-	publicaciones_actualizadas[pub_key][com_key] = actualizada;
-
-	dispatch({
-		type: ACTUALIZAR,
-		payload: publicaciones_actualizadas
-	});
-}
+};
 ```

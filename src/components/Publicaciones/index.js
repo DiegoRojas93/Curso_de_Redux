@@ -11,7 +11,8 @@ const { traerTodos: usuariosTraerTodos } = usuariosActions;
 const {
 	traerPorUsuario: publicacionesTraerPorUsuario,
 	abrirCerrar,
-	traerComentarios} = publicacionesActions;
+	traerComentarios
+} = publicacionesActions;
 
 class Publicaciones extends Component {
 
@@ -35,8 +36,8 @@ class Publicaciones extends Component {
 
 	ponerUsuario = () => {
 		const {
-			usuariosReducer,
-			match: { params: { key } }
+			match: { params: { key } },
+			usuariosReducer
 		} = this.props;
 
 		if (usuariosReducer.error) {
@@ -56,7 +57,6 @@ class Publicaciones extends Component {
 	};
 
 	ponerPublicaciones = () => {
-
 		const {
 			usuariosReducer,
 			usuariosReducer: { usuarios },
@@ -66,38 +66,32 @@ class Publicaciones extends Component {
 		} = this.props;
 
 		if (!usuarios.length) return;
-
 		if (usuariosReducer.error) return;
-
 		if (publicacionesReducer.cargando) {
-			return <Spinner />
+			return <Spinner />;
 		}
-
 		if (publicacionesReducer.error) {
 			return <Fatal mensaje={ publicacionesReducer.error } />
 		}
-
 		if (!publicaciones.length) return;
-
 		if (!('publicaciones_key' in usuarios[key])) return;
 
-		const{ publicaciones_key } = usuarios[key];
-
+		const { publicaciones_key } = usuarios[key];
 		return this.mostrarInfo(
 			publicaciones[publicaciones_key],
 			publicaciones_key
-		)
-	}
+		);
+	};
 
 	mostrarInfo = (publicaciones, pub_key) => (
 		publicaciones.map((publicacion, com_key) => (
 			<div
-				className="pub_titulo"
-				key= { publicacion.id }
+				key={publicacion.id}
+				className='pub_titulo'
 				onClick={
-					() => this.mostarComentarios(pub_key, com_key, publicacion.comentarios)
-					}
-				>
+					() => this.mostrarComentarios(pub_key, com_key, publicacion.comentarios)
+				}
+			>
 				<h2>
 					{ publicacion.title }
 				</h2>
@@ -105,22 +99,24 @@ class Publicaciones extends Component {
 					{ publicacion.body }
 				</h3>
 				{
-					(publicacion.abierto) ? <Comentarios /> : ''
+					(publicacion.abierto) ?
+						<Comentarios
+							comentarios={ publicacion.comentarios }
+						/>
+						: ''
 				}
 			</div>
 		))
 	);
 
-	mostarComentarios = (pub_key, com_key, comentarios) => {
-		this.props.abrirCerrar(pub_key, com_key);
-
-		if(!comentarios.length){
-			this.props.traerComentarios(pub_key, com_key);
+	mostrarComentarios = (pub_key, com_key, comentarios) => {
+		this.props.abrirCerrar(pub_key, com_key)
+		if (!comentarios.length) {
+			this.props.traerComentarios(pub_key, com_key)
 		}
+	};
 
-	}
 	render() {
-		console.log(this.props);
 		return (
 			<div>
 				{ this.ponerUsuario() }
