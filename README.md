@@ -6,26 +6,9 @@
 
 A partir de este módulo aprenderemos a usar Redux de una forma más avanzada, como lo es compartir recucers, comprender la inmutabilidad, actualizar información dinámicamente y manejar diferentes ***reducers.***
 
-#### Mostrar Compoentes dinámicamente
+#### Llamadas asincronas dinámicas
 
-Ahora lo que vamos a hacer, es que al hacer click a las publicaciones del usuario, aparezca un listado comentarios.
-
-.src/components/Publicaciones/Comentarios.js
-```
-import React from 'react';
-
-const Comentarios = (props) => {
-	return (
-		<ul>
-			<li>Hola</li>
-			<li>Hola</li>
-			<li>Hola</li>
-		</ul>
-	)
-}
-
-export default Comentarios;
-```
+Ahora lo que vamos a hacer, es que al hacer click a las publicaciones del usuario, aparezca un listado comentarios, esta seccion o clases es la continuacion de la anterior.
 
 .src/components/Publicaciones/index.js
 ```
@@ -126,7 +109,7 @@ class Publicaciones extends Component {
 				className="pub_titulo"
 				key= { publicacion.id }
 				onClick={
-					() => this.MostrarComentarios(pub_key, com_key, publicacion.comentarios)
+					() => this.mostarComentarios(pub_key, com_key, publicacion.comentarios)
 					}
 				>
 				<h2>
@@ -144,7 +127,11 @@ class Publicaciones extends Component {
 
 	mostarComentarios = (pub_key, com_key, comentarios) => {
 		this.props.abrirCerrar(pub_key, com_key);
-		this.props.traerComentarios(pub_key, com_key)
+
+		if(!comentarios.length){
+			this.props.traerComentarios(pub_key, com_key);
+		}
+
 	}
 	render() {
 		console.log(this.props);
@@ -258,7 +245,27 @@ export const abrirCerrar = (pub_key, com_key) => (dispatch,getState) => {
 	});
 }
 
-export const traerComentarios = (pub_key, com_key) => (dispatch, getState) => {
+export const traerComentarios = (pub_key, com_key) => async (dispatch, getState) => {
+	const { publicaciones} = getState().publicacionesReducer;
+	const seleccionada = publicaciones[pub_key][com_key];
 
+	const respuesta = await axios.get(`https://jsonplaceholder.typicode.com/comments?postId=${seleccionada.id}`);
+
+	const actualizada = {
+		...seleccionada,
+		comentarios: !respuesta.data
+	}
+
+	const publicaciones_actualizadas = [ ...publicaciones ];
+	publicaciones_actualizadas[pub_key] = [
+		...publicaciones[pub_key]
+	];
+
+	publicaciones_actualizadas[pub_key][com_key] = actualizada;
+
+	dispatch({
+		type: ACTUALIZAR,
+		payload: publicaciones_actualizadas
+	});
 }
 ```
