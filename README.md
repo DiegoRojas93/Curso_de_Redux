@@ -6,11 +6,26 @@
 
 A partir de este módulo aprenderemos a usar Redux de una forma más avanzada, como lo es compartir recucers, comprender la inmutabilidad, actualizar información dinámicamente y manejar diferentes ***reducers.***
 
-#### Estado con interacción
+#### Mostrar Compoentes dinámicamente
 
-Por ahora lo que estamos viendo es que nuestro componente esta enviando al actionCreator el key de publicaciones y el key que vamos a traer,
+Ahora lo que vamos a hacer, es que al hacer click a las publicaciones del usuario, aparezca un listado comentarios.
 
-Ahora lo que vamos a hacer, es que al hacer click a los comentarios o publicaciones del usuario, nos aparezca que esta abierto o cerrado.
+.src/components/Publicaciones/Comentarios.js
+```
+import React from 'react';
+
+const Comentarios = (props) => {
+	return (
+		<ul>
+			<li>Hola</li>
+			<li>Hola</li>
+			<li>Hola</li>
+		</ul>
+	)
+}
+
+export default Comentarios;
+```
 
 .src/components/Publicaciones/index.js
 ```
@@ -18,12 +33,16 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import Spinner from '../General/Spinner';
 import Fatal from '../General/Fatal';
+import Comentarios from './Comentarios';
 
 import * as usuariosActions from '../../actions/usuariosActions';
 import * as publicacionesActions from '../../actions/publicacionesActions';
 
 const { traerTodos: usuariosTraerTodos } = usuariosActions;
-const { traerPorUsuario: publicacionesTraerPorUsuario, abrirCerrar } = publicacionesActions;
+const {
+	traerPorUsuario: publicacionesTraerPorUsuario,
+	abrirCerrar,
+	traerComentarios} = publicacionesActions;
 
 class Publicaciones extends Component {
 
@@ -106,7 +125,9 @@ class Publicaciones extends Component {
 			<div
 				className="pub_titulo"
 				key= { publicacion.id }
-				onClick={ () => this.props.abrirCerrar(pub_key, com_key) }
+				onClick={
+					() => this.MostrarComentarios(pub_key, com_key, publicacion.comentarios)
+					}
 				>
 				<h2>
 					{ publicacion.title }
@@ -115,11 +136,16 @@ class Publicaciones extends Component {
 					{ publicacion.body }
 				</h3>
 				{
-					(publicacion.abierto) ? 'abierto' : 'cerrado'
+					(publicacion.abierto) ? <Comentarios /> : ''
 				}
 			</div>
 		))
 	);
+
+	mostarComentarios = (pub_key, com_key, comentarios) => {
+		this.props.abrirCerrar(pub_key, com_key);
+		this.props.traerComentarios(pub_key, com_key)
+	}
 	render() {
 		console.log(this.props);
 		return (
@@ -138,13 +164,14 @@ const mapStateToProps = ({ usuariosReducer, publicacionesReducer }) => {
 const mapDispatchToProps = {
 	usuariosTraerTodos,
 	publicacionesTraerPorUsuario,
-	abrirCerrar
+	abrirCerrar,
+	traerComentarios
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(Publicaciones);
 ```
 
-./src/actions/publicacionesActions.js
+.src/actions/publicacionesActions.js
 ```
 import axios from 'axios';
 import {
@@ -230,46 +257,8 @@ export const abrirCerrar = (pub_key, com_key) => (dispatch,getState) => {
 		payload: publicaciones_actualizadas
 	});
 }
-```
 
-.src/reducers/publicacionesReducers.js
-```
-import {
-	CARGANDO,
-	ERROR,
-	ACTUALIZAR
-} from '../types/publicacionesTypes';
+export const traerComentarios = (pub_key, com_key) => (dispatch, getState) => {
 
-const INITIAL_STATE = {
-	publicaciones: [],
-	cargando: false,
-	error: ''
-};
-
-export default (state = INITIAL_STATE, action) => {
-	switch (action.type) {
-		case ACTUALIZAR:
-			return {
-				...state,
-				publicaciones: action.payload,
-				cargando: false,
-				error: ''
-			};
-
-		case CARGANDO:
-			return { ...state, cargando: true };
-
-		case ERROR:
-			return { ...state, error: action.payload, cargando: false };
-
-		default: return state;
-	};
-};
-```
-
-.src/types/publicacionesTypes.js
-```
-export const ACTUALIZAR = 'publicaciones_actualizar';
-export const CARGANDO = 'publicaciones_cargando';
-export const ERROR = 'publicaciones_error';
+}
 ```
