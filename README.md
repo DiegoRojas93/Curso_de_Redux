@@ -2,9 +2,11 @@
 
 [![Redux](https://i.ibb.co/WH2dzkQ/redux-simple.gif "Redux")](https://i.ibb.co/WH2dzkQ/redux-simple.gif "Redux")
 
-### Reutilizar componentes
+### PUT
 
-Ya tenemos el ciclo de agregar terminado. Vamos a continuar con el ciclo de evitar y en este vamos a usar la misma forma de que tenemos para agregar.
+Hemos encontrado un error al recargar la pagina de editar tareas, esto se debe a que la pagina quiere traer una tarea que todavia no exite; esto se arreglara.
+
+Tambien vamos a trabajar a que los checks de la pagina tareas no se borren al pasar entre paginas
 
 .src/components/Tareas/index.js
 ```
@@ -51,7 +53,7 @@ class Tareas extends Component {
 	}
 
 	ponerTareas = (usu_id) => {
-		const { tareas } = this.props;
+		const { tareas, cambioCheck } = this.props;
 
 		const por_usuario = {
 			...tareas[usu_id]
@@ -59,7 +61,11 @@ class Tareas extends Component {
 
 		return Object.keys(por_usuario).map((tar_id)=>(
 			<div key={tar_id}>
-				<input type="checkbox" defaultChecked={por_usuario[tar_id].completed} />
+				<input
+					type="checkbox"
+					defaultChecked={por_usuario[tar_id].completed}
+					onChange={() => cambioCheck(usu_id, tar_id)}
+				/>
 				{
 					por_usuario[tar_id].title
 				}
@@ -94,201 +100,6 @@ const mapStateToProps = ({tareasReducer}) => tareasReducer;
 export default connect(mapStateToProps, tareasActions)(Tareas)
 ```
 
-.src/css/index.css
-```
-#margen {
-	margin: 100px;
-	margin-top: 50px;
-}
-
-.tabla {
-	width: 100%;
-	text-align: left;
-}
-
-.tabla td {
-	padding-top: 10px;
-	padding-bottom: 10px;
-}
-
-#menu {
-	background-color: #253A46;
-	padding: 20px;
-	font-size: 20px;
-}
-
-#menu a {
-	color: white;
-	padding-right: 50px;
-}
-
-.contenedor_tareas {
-	font-size: 20px;
-	margin-left: 50px;
-	margin-bottom: 70px;
-}
-
-body {
-	margin: 0;
-}
-
-.center {
-	text-align: center;
-}
-
-.rojo {
-	color: red;
-}
-
-.pub_titulo {
-	border-top: 1px solid black;
-	cursor: pointer;
-}
-
-li {
-	margin: 15px 0 15px 0;
-}
-
-.m_left{
-	margin-letf: 20px;
-}
-```
-.src/components/Tareas/Guardar.js
-```
-import React, { Component } from 'react'
-import { connect } from 'react-redux'
-import { Redirect } from 'react-router-dom'
-
-import * as tareasActions from '../../actions/tareasActions'
-import Spinner from '../General/Spinner'
-import Fatal from '../General/Fatal'
-
-class Guardar extends Component {
-
-	componentDidMount(){
-		const {
-			match: { params: {usu_id, tar_id} },
-			tareas,
-			cambioUsuarioId,
-			cambioTitulo
-		} = this.props;
-
-		if ( usu_id && tar_id) {
-			const  tarea = tareas[usu_id][tar_id];
-			cambioUsuarioId(tarea.userId);
-			cambioTitulo(tarea.title)
-		}
-	}
-
-	cambioUsuarioId = (event) => {
-		this.props.cambioUsuarioId(event.target.value)
-	}
-
-	cambioTitulo = (event) => {
-		this.props.cambioTitulo(event.target.value)
-	}
-
-	guardar = () => {
-		const {
-			match: { params: {usu_id, tar_id} },
-			tareas,
-			usuario_id,
-			titulo,
-			agregar,
-			editar
-		} = this.props;
-
-		const nueva_tarea = {
-			userId: usuario_id,
-			tittle: titulo,
-			completed: false
-		}
-
-		if (usu_id && tar_id) {
-
-			const tarea = tareas[usu_id][tar_id]
-			const tarea_editada = {
-				...nueva_tarea,
-				completed: tarea.completed,
-				id: tarea.id
-			}
-			editar(tarea_editada)
-
-		}else{
-			agregar(nueva_tarea)
-		}
-
-	}
-
-	deshabilitar = () => {
-		const {
-			usuario_id,
-			titulo,
-			cargando
-		} = this.props;
-
-		if(cargando){
-			return true;
-		}
-
-		if (!usuario_id || !titulo) {
-			return true;
-		}
-
-		return false;
-	}
-
-	mostrarAccion = () => {
-		const { error, cargando } = this.props;
-
-		if(cargando) {
-			return <Spinner />
-		}
-
-		if (error) {
-			return <Fatal mensaje={error} />
-		}
-	}
-
-	render() {
-		return (
-			<div>
-				{
-					(this.props.regresar) ? <Redirect to='/tareas' /> : ''
-				}
-				<h1>Guardar tareas</h1>
-				usuario id:
-				<input
-					type='number'
-					value={ this.props.usuario_id }
-					onChange={ this.cambioUsuarioId } 
-				/>
-				<br /><br />
-				Titulo:
-				<input
-					value={ this.props.titulo}
-					onChange={ this.cambioTitulo } 
-				/>
-				<br /><br />
-				<button
-					onClick={ this.guardar }
-					disabled={this.deshabilitar()}
-				>
-					Guardar
-				</button>
-
-				{ this.mostrarAccion()}
-
-			</div>
-		)
-	}
-}
-
-const mapStateToProps = ({ tareasReducer }) => tareasReducer
-
-export default connect(mapStateToProps, tareasActions)(Guardar)
-```
-
 .src/actions/tareasActions.js
 ```
 import axios from 'axios';
@@ -298,7 +109,8 @@ import {
 	ERROR,
 	CAMBIO_USUARIO_ID,
 	CAMBIO_TITULO,
-	AGREGADA
+	GUARDAR,
+	ACTUALIZAR
 } from '../types/tareasTypes';
 
 export const traerTodas = () => async (dispatch) => {
@@ -362,7 +174,7 @@ export const agregar = (nueva_tarea) => async (dispatch) => {
 		console.log(respuesta.data);
 
 		dispatch({
-			type: AGREGADA
+			type: GUARDAR
 		})
 
 	}catch(error){
@@ -374,7 +186,126 @@ export const agregar = (nueva_tarea) => async (dispatch) => {
 	}
 }
 
-export const editar = (tarea_editada) => (dispatch) => {
-	console.log(tarea_editada);
+export const editar = (tarea_editada) => async (dispatch) => {
+
+	dispatch({
+		type:CARGANDO
+	})
+
+	try {
+		const respuesta = await axios.put(`https://jsonplaceholder.typicode.com/todos/${tarea_editada.id}`, tarea_editada)
+
+		console.log(respuesta.data);
+
+		dispatch({
+			type: GUARDAR
+		})
+
+	}catch(error){
+		console.log(error.message);
+		dispatch({
+			type: ERROR,
+			payload: 'Intente más tarde.'
+		})
+	}
+}
+
+export const cambioCheck = (usu_id, tar_id) => (dispatch, getState) => {
+	const { tareas } = getState().tareasReducer;
+	const seleccionada = tareas[usu_id][tar_id];
+
+	const actualizadas = {
+		...tareas
+	};
+
+	actualizadas[usu_id] = {
+		...tareas[usu_id]
+	}
+
+	actualizadas[usu_id][tar_id] = {
+		...tareas[usu_id][tar_id],
+		completed: !seleccionada.completed
+	}
+
+	dispatch({
+		type: ACTUALIZAR,
+		payload: actualizadas
+	})
 }
 ```
+.src/reducers/tareasReducer.js
+```
+import {
+	TRAER_TODAS,
+	CARGANDO,
+	ERROR,
+	CAMBIO_USUARIO_ID,
+	CAMBIO_TITULO,
+	GUARDAR,
+	ACTUALIZAR
+} from '../types/tareasTypes';
+
+const INITIAL_STATE = {
+	tareas: {},
+	cargando: false,
+	error: '',
+	usuario_id: '',
+	titulo: '',
+	regresar: false
+};
+
+export default (state = INITIAL_STATE, action) => {
+	switch (action.type) {
+		case TRAER_TODAS:
+			return {
+				...state,
+				tareas: action.payload,
+				cargando: false,
+				error: '',
+				regresar: false
+			};
+
+		case CARGANDO:
+			return { ...state, cargando: true };
+
+		case ERROR:
+			return { ...state, error: action.payload, cargando: false };
+
+		case CAMBIO_USUARIO_ID:
+			return { ...state, usuario_id: action.payload }
+
+		case CAMBIO_TITULO:
+			return { ...state, titulo: action.payload }
+
+		case ACTUALIZAR:
+			return { ...state, tareas: action.payload }
+
+		case GUARDAR:
+			return {
+				...state,
+				tareas: {},
+				cargando: false,
+				error: '',
+				regresar: true,
+				usuario_id: '',
+				titulo: ''
+			}
+
+		default: return state;
+	};
+}
+```
+
+.src/types/tareasTypes.js
+```
+export const TRAER_TODAS = 'tareas_traer_todas';
+export const CARGANDO = 'tareas_cargando';
+export const ERROR = 'tareas_error';
+export const CAMBIO_USUARIO_ID = 'tareas_cambio_usuario_id'
+export const CAMBIO_TITULO = 'tareas_cambio_titulo'
+export const AGREGADA = 'tareas_agregada'
+export const GUARDAR= 'tareas_guardar'
+export const ACTUALIZAR= 'tareas_Actualizar'
+```
+
+[Inmutabilidad](https://redux.js.org/recipes/structuring-reducers/immutable-update-patterns#correct-approach-copying-all-levels-of-nested-data "Inmutabilidad")
