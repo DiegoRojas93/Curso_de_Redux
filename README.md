@@ -2,9 +2,11 @@
 
 [![Redux](https://i.ibb.co/WH2dzkQ/redux-simple.gif "Redux")](https://i.ibb.co/WH2dzkQ/redux-simple.gif "Redux")
 
-### Manejar inputs con Reducer
+### Post
 
-Lo que vamos hacer ahora es poder dependiendo del ususario agregar, quitar ó editar las tareas con la ayuda de los metodpo HTTP. Para hacer esto se debera agregar el ***ususario id*** y el ***Tiyulo*** al reducer de tareas
+Ahora lo que necesitamos es hacer ya la acción para poder guardar la informacion a la base de datos de la [api.](https://jsonplaceholder.typicode.com/todos "api")
+
+Recuerda este url no tiene una base de datos real, solo es para poder hacer este ejercicio.
 
 .src/components/Tareas/Guardar.js
 ```
@@ -20,6 +22,18 @@ class Guardar extends Component {
 
 	cambioTitulo = (event) => {
 		this.props.cambioTitulo(event.target.value)
+	}
+
+	guardar = () => {
+		const { usuario_id, titulo, agregar } = this.props;
+
+		const nueva_tarea = {
+			userId: usuario_id,
+			tittle: titulo,
+			completed: false
+		}
+
+		agregar(nueva_tarea)
 	}
 
 	render() {
@@ -39,7 +53,9 @@ class Guardar extends Component {
 					onChange={ this.cambioTitulo } 
 				/>
 				<br /><br />
-				<button>Guardar</button>
+				<button
+					onClick={ this.guardar }
+				>Guardar</button>
 			</div>
 		)
 	}
@@ -49,6 +65,7 @@ const mapStateToProps = ({ tareasReducer }) => tareasReducer
 
 export default connect(mapStateToProps, tareasActions)(Guardar)
 ```
+
 .src/reducers/tareasReducer.js
 ```
 import { TRAER_TODAS, CARGANDO, ERROR } from '../types/tareasTypes';
@@ -82,6 +99,9 @@ export default (state = INITIAL_STATE, action) => {
 		
 		case 'cambio_titulo':
 			return { ...state, titulo: action.payload }
+
+		case 'agregada':
+			return { ...state, tareas: {}, cargando: false, error: '' }
 
 		default: return state;
 	};
@@ -141,4 +161,45 @@ export const cambioTitulo = (titulo) => (dispatch) => {
 		payload: titulo
 	})
 }
+
+
+export const agregar = (nueva_tarea) => async (dispatch) => {
+
+	dispatch({
+		type:CARGANDO
+	})
+
+	try {
+		const respuesta = await axios.post('https://jsonplaceholder.typicode.com/todos', nueva_tarea)
+
+		console.log(respuesta.data);
+
+		dispatch({
+			type: 'agregada'
+			
+		})
+
+	}catch(error){
+		console.log(error.message);
+		dispatch({
+			type: ERROR,
+			payload: 'Intente más tarde.'
+		})
+	}
+}
+```
+
+**Nota:** Podemos usar ***fetch*** en vez de Axios, para hacer el metodo POST.
+
+EJEMPLO
+
+```
+const data = await fetch("https://jsonplaceholder.typicode.com/todos", { 
+					method: 'POST', 
+					headers: {
+							'Content-Type': 'application/json'
+					},
+					body: JSON.stringify(newTask)
+			}
+	).then(response => response.json())
 ```
