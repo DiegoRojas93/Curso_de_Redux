@@ -1,10 +1,10 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
-import * as tareasActions from '../../actions/tareasActions'
+import { Redirect } from 'react-router-dom'
 
+import * as tareasActions from '../../actions/tareasActions'
 import Spinner from '../General/Spinner'
 import Fatal from '../General/Fatal'
-import { Redirect } from 'react-router-dom'
 
 class Guardar extends Component {
 
@@ -61,6 +61,9 @@ class Guardar extends Component {
 	render() {
 		return (
 			<div>
+				{
+					(this.props.regresar) ? <Redirect to='/tareas' /> : ''
+				}
 				<h1>Guardar tareas</h1>
 				usuario id:
 				<input
