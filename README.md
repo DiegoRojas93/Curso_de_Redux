@@ -2,101 +2,42 @@
 
 [![Redux](https://i.ibb.co/WH2dzkQ/redux-simple.gif "Redux")](https://i.ibb.co/WH2dzkQ/redux-simple.gif "Redux")
 
-### Mapear Objetos
+### Manejar inputs con Reducer
 
-Lo que vamos hacer ahora es agregar un boton que nos vaya a mandar a un componente nuevo para dar de alta a una tarea.
+Lo que vamos hacer ahora es poder dependiendo del ususario agregar, quitar ó editar las tareas con la ayuda de los metodpo HTTP. Para hacer esto se debera agregar el ***ususario id*** y el ***Tiyulo*** al reducer de tareas
 
-.src/components/Tareas/index.js
+.src/components/Tareas/Guardar.js
 ```
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
-import { Link } from 'react-router-dom'
-
 import * as tareasActions from '../../actions/tareasActions'
 
-import Spinner from '../General/Spinner'
-import Fatal from '../General/Fatal'
-
-class Tareas extends Component {
-
-	componentDidMount(){
-		this.props.traerTodas()
-	}
-
-	mostrarContenido = () => {
-
-		const { tareas, cargando, error } = this.props;
-
-
-		if(cargando) {
-			return <Spinner />
-		}
-
-		if(error) {
-			return <Fatal mensaje={error} />
-		}
-
-		return Object.keys(tareas).map((usu_id) => (
-			<div key={usu_id}>
-				<h2>
-					Usuario {usu_id}
-				</h2>
-				<div className="contenedor_tareas">
-					{ this.ponerTareas(usu_id)}
-				</div>
-			</div>
-		))
-	}
-
-	ponerTareas = (usu_id) => {
-		const { tareas } = this.props;
-
-		const por_usuario = {
-			...tareas[usu_id]
-		}
-
-		return Object.keys(por_usuario).map((tar_id)=>(
-			<div key={tar_id}>
-				<input type="checkbox" defaultChecked={por_usuario[tar_id].completed} />
-				{
-					por_usuario[tar_id].title
-				}
-			</div>
-		))
-	}
-
-	render() {
-		return (
-			<div>
-				<button>
-					<Link to='/tareas/guardar'>
-						Agregar
-					</Link>
-				</button>
-				{ this.mostrarContenido() }
-			</div>
-		)
-	}
-}
-
-const mapStateToProps = ({tareasReducer}) => tareasReducer;
-
-export default connect(mapStateToProps, tareasActions)(Tareas)
-```
-.src/components/Tareas/Guardar.css
-```
-import React, { Component } from 'react'
-
 class Guardar extends Component {
+
+	cambioUsuarioId = (event) => {
+		this.props.cambioUsuarioId(event.target.value)
+	}
+
+	cambioTitulo = (event) => {
+		this.props.cambioTitulo(event.target.value)
+	}
+
 	render() {
 		return (
 			<div>
 				<h1>Guardar tareas</h1>
-				ususario id:
-				<input type='number' />
+				usuario id:
+				<input
+					type='number'
+					value={ this.props.usuario_id }
+					onChange={ this.cambioUsuarioId } 
+				/>
 				<br /><br />
 				Titulo:
-				<input type="text"/>
+				<input
+					value={ this.props.titulo}
+					onChange={ this.cambioTitulo } 
+				/>
 				<br /><br />
 				<button>Guardar</button>
 			</div>
@@ -104,29 +45,100 @@ class Guardar extends Component {
 	}
 }
 
-export default Guardar
-```
-.src/components/Tareas/App.css
-```
-import React from 'react';
-import { BrowserRouter, Route } from 'react-router-dom';
-import Menu from './Menu';
-import Usuarios from './Usuarios';
-import Publicaciones from './Publicaciones';
-import Tareas from './Tareas/index'
-import TareasGuardar from './Tareas/Guardar'
+const mapStateToProps = ({ tareasReducer }) => tareasReducer
 
-const App = (props) => (
-	<BrowserRouter>
-		<Menu />
-		<div id="margen">
-			<Route exact path='/' component={Usuarios} />
-			<Route exact path='/tareas' component={Tareas} />
-			<Route exact path='/publicaciones/:key' component={Publicaciones} />
-			<Route exact path='/tareas/guardar' component={TareasGuardar} />
-		</div>
-	</BrowserRouter>
-);
+export default connect(mapStateToProps, tareasActions)(Guardar)
+```
+.src/reducers/tareasReducer.js
+```
+import { TRAER_TODAS, CARGANDO, ERROR } from '../types/tareasTypes';
 
-export default App;
+const INITIAL_STATE = {
+	tareas: {},
+	cargando: false,
+	error: '',
+	usuario_id: '',
+	titulo: ''
+};
+
+export default (state = INITIAL_STATE, action) => {
+	switch (action.type) {
+		case TRAER_TODAS:
+			return {
+				...state,
+				tareas: action.payload,
+				cargando: false,
+				error: ''
+			};
+
+		case CARGANDO:
+			return { ...state, cargando: true };
+
+		case ERROR:
+			return { ...state, error: action.payload, cargando: false };
+
+		case 'cambio_Usuario_Id':
+			return { ...state, usuario_id: action.payload }
+		
+		case 'cambio_titulo':
+			return { ...state, titulo: action.payload }
+
+		default: return state;
+	};
+}
+```
+
+.src/actions/tareasActions.js
+
+```
+import axios from 'axios';
+import { TRAER_TODAS, CARGANDO, ERROR } from '../types/tareasTypes';
+
+export const traerTodas = () => async (dispatch) => {
+
+	dispatch({
+		type: CARGANDO
+	});
+
+	try {
+		const respuesta = await axios.get('https://jsonplaceholder.typicode.com/todos');
+
+		const tareas = {}
+
+		respuesta.data.map((tar) => (
+			tareas[tar.userId] = {
+				...tareas[tar.userId],
+				[tar.id]: {
+					...tar
+				}
+			}
+		))
+
+		dispatch({
+			type: TRAER_TODAS,
+			payload: tareas
+		})
+	}
+	catch (error) {
+		console.log(error.message);
+		dispatch({
+			type: ERROR,
+			payload: 'Información de tareas no disponible.'
+		})
+	}
+};
+
+export const cambioUsuarioId = (usuarioId) => (dispatch) => {
+	dispatch({
+		type: 'cambio_Usuario_Id',
+		payload: usuarioId
+	})
+}
+
+export const cambioTitulo = (titulo) => (dispatch) => {
+	dispatch({
+		type: 'cambio_titulo',
+		payload: titulo
+	})
+}
 ```
