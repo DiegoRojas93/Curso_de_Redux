@@ -4,6 +4,46 @@
 
 ### Nuevo ciclo Redux
 
-Ahora como Vamos a trabajar con los metodos de HTTP, deberemos crear todo el ciclo de [Redux.](https://es.redux.js.org/ "Redux")
+vamos a dar un vistazo al [jsonplaceholder](https://jsonplaceholder.typicode.com/todos "jsonplaceholder") que muestra las tareas de los usuarios.
 
-Mira todos los archivos creados en este commit.
+Lo que vamos hacer es separar las tareas por usuarios y por id; normalizando asi los datos de la API obneniendo asi un objeto llamadado tareas.
+
+.src/actions/tareasActions.js
+```
+import axios from 'axios';
+import { TRAER_TODAS, CARGANDO, ERROR } from '../types/tareasTypes';
+
+export const traerTodas = () => async (dispatch) => {
+
+	dispatch({
+		type: CARGANDO
+	});
+
+	try {
+		const respuesta = await axios.get('https://jsonplaceholder.typicode.com/todos');
+
+		const tareas = {}
+
+		respuesta.data.map((tar) => (
+			tareas[tar.userId] = {
+				...tareas[tar.userId],
+				[tar.id]: {
+					...tar
+				}
+			}
+		))
+
+		dispatch({
+			type: TRAER_TODAS,
+			payload: tareas
+		})
+	}
+	catch (error) {
+		console.log(error.message);
+		dispatch({
+			type: ERROR,
+			payload: 'Información de tareas no disponible.'
+		})
+	}
+};
+```
