@@ -8,6 +8,21 @@ import Fatal from '../General/Fatal'
 
 class Guardar extends Component {
 
+	componentDidMount(){
+		const {
+			match: { params: {usu_id, tar_id} },
+			tareas,
+			cambioUsuarioId,
+			cambioTitulo
+		} = this.props;
+
+		if ( usu_id && tar_id) {
+			const  tarea = tareas[usu_id][tar_id];
+			cambioUsuarioId(tarea.userId);
+			cambioTitulo(tarea.title)
+		}
+	}
+
 	cambioUsuarioId = (event) => {
 		this.props.cambioUsuarioId(event.target.value)
 	}
@@ -17,7 +32,14 @@ class Guardar extends Component {
 	}
 
 	guardar = () => {
-		const { usuario_id, titulo, agregar } = this.props;
+		const {
+			match: { params: {usu_id, tar_id} },
+			tareas,
+			usuario_id,
+			titulo,
+			agregar,
+			editar
+		} = this.props;
 
 		const nueva_tarea = {
 			userId: usuario_id,
@@ -25,7 +47,20 @@ class Guardar extends Component {
 			completed: false
 		}
 
-		agregar(nueva_tarea)
+		if (usu_id && tar_id) {
+
+			const tarea = tareas[usu_id][tar_id]
+			const tarea_editada = {
+				...nueva_tarea,
+				completed: tarea.completed,
+				id: tarea.id
+			}
+			editar(tarea_editada)
+
+		}else{
+			agregar(nueva_tarea)
+		}
+
 	}
 
 	deshabilitar = () => {
