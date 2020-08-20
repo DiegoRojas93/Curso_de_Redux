@@ -4,18 +4,13 @@
 
 ### Mapear Objetos
 
-Vamos a agragar el contenido necesario para que se puestra al usuario.
-
-Un objeto Map puede iterar sobre sus elementos en orden de inserción. Un bucle for..of devolverá un array de [clave, valor] en cada iteración.
-
-Cabe destacar que un **Map** el cual es un mapa de un objeto, especialmente un diccionario de diccionarios, solo se va a mapear en el orden de inserción del objeto — el cual es aleatorio y no ordenado.
-
-Un [Object.keys](https://developer.mozilla.org/es/docs/Web/JavaScript/Referencia/Objetos_globales/Object/keys "Object.keys") devuelve un array cuyos elementos son strings correspondientes a las propiedades enumerables que se encuentran directamente en el object. El orden de las propiedades es el mismo que se proporciona al iterar manualmente sobre las propiedades del objeto.
+Lo que vamos hacer ahora es agregar un boton que nos vaya a mandar a un componente nuevo para dar de alta a una tarea.
 
 .src/components/Tareas/index.js
 ```
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
+import { Link } from 'react-router-dom'
 
 import * as tareasActions from '../../actions/tareasActions'
 
@@ -71,9 +66,13 @@ class Tareas extends Component {
 	}
 
 	render() {
-		console.log(this.props);
 		return (
 			<div>
+				<button>
+					<Link to='/tareas/guardar'>
+						Agregar
+					</Link>
+				</button>
 				{ this.mostrarContenido() }
 			</div>
 		)
@@ -84,58 +83,50 @@ const mapStateToProps = ({tareasReducer}) => tareasReducer;
 
 export default connect(mapStateToProps, tareasActions)(Tareas)
 ```
-.src/css/index.css
+.src/components/Tareas/Guardar.css
 ```
-#margen {
-	margin: 100px;
-	margin-top: 50px;
+import React, { Component } from 'react'
+
+class Guardar extends Component {
+	render() {
+		return (
+			<div>
+				<h1>Guardar tareas</h1>
+				ususario id:
+				<input type='number' />
+				<br /><br />
+				Titulo:
+				<input type="text"/>
+				<br /><br />
+				<button>Guardar</button>
+			</div>
+		)
+	}
 }
 
-.tabla {
-	width: 100%;
-	text-align: left;
-}
+export default Guardar
+```
+.src/components/Tareas/App.css
+```
+import React from 'react';
+import { BrowserRouter, Route } from 'react-router-dom';
+import Menu from './Menu';
+import Usuarios from './Usuarios';
+import Publicaciones from './Publicaciones';
+import Tareas from './Tareas/index'
+import TareasGuardar from './Tareas/Guardar'
 
-.tabla td {
-	padding-top: 10px;
-	padding-bottom: 10px;
-}
+const App = (props) => (
+	<BrowserRouter>
+		<Menu />
+		<div id="margen">
+			<Route exact path='/' component={Usuarios} />
+			<Route exact path='/tareas' component={Tareas} />
+			<Route exact path='/publicaciones/:key' component={Publicaciones} />
+			<Route exact path='/tareas/guardar' component={TareasGuardar} />
+		</div>
+	</BrowserRouter>
+);
 
-#menu {
-	background-color: #253A46;
-	padding: 20px;
-	font-size: 20px;
-}
-
-#menu a {
-	color: white;
-	padding-right: 50px;
-}
-
-.contenedor_tareas {
-	font-size: 20px;
-	margin-left: 50px;
-	margin-bottom: 70px;
-}
-
-body {
-	margin: 0;
-}
-
-.center {
-	text-align: center;
-}
-
-.rojo {
-	color: red;
-}
-
-.pub_titulo {
-	border-top: 1px solid black;
-	cursor: pointer;
-}
-
-li {
-	margin: 15px 0 15px 0;
-}
+export default App;
 ```
