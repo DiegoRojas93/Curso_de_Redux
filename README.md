@@ -2,17 +2,99 @@
 
 [![Redux](https://i.ibb.co/WH2dzkQ/redux-simple.gif "Redux")](https://i.ibb.co/WH2dzkQ/redux-simple.gif "Redux")
 
-### Post
+### Deshabilitando botón
 
-Ahora lo que necesitamos es hacer ya la acción para poder guardar la informacion a la base de datos de la [api.](https://jsonplaceholder.typicode.com/todos "api")
+Ahora lo que vamos a hacer es una vez que se nuestra tarea se haya guardado en la api, vamos a redireccionar para que se regrese al index de tareas.
 
-Recuerda este url no tiene una base de datos real, solo es para poder hacer este ejercicio.
+.src/components/Tareas/index.js
+```
+import React, { Component } from 'react'
+import { connect } from 'react-redux'
+import { Link } from 'react-router-dom'
+
+import * as tareasActions from '../../actions/tareasActions'
+
+import Spinner from '../General/Spinner'
+import Fatal from '../General/Fatal'
+
+class Tareas extends Component {
+
+	componentDidMount(){
+		if(!Object.keys(this.props.tareas).length){
+			this.props.traerTodas()
+		}
+	}
+
+	mostrarContenido = () => {
+
+		const { tareas, cargando, error } = this.props;
+
+
+		if(cargando) {
+			return <Spinner />
+		}
+
+		if(error) {
+			return <Fatal mensaje={error} />
+		}
+
+		return Object.keys(tareas).map((usu_id) => (
+			<div key={usu_id}>
+				<h2>
+					Usuario {usu_id}
+				</h2>
+				<div className="contenedor_tareas">
+					{ this.ponerTareas(usu_id)}
+				</div>
+			</div>
+		))
+	}
+
+	ponerTareas = (usu_id) => {
+		const { tareas } = this.props;
+
+		const por_usuario = {
+			...tareas[usu_id]
+		}
+
+		return Object.keys(por_usuario).map((tar_id)=>(
+			<div key={tar_id}>
+				<input type="checkbox" defaultChecked={por_usuario[tar_id].completed} />
+				{
+					por_usuario[tar_id].title
+				}
+			</div>
+		))
+	}
+
+	render() {
+		return (
+			<div>
+				<button>
+					<Link to='/tareas/guardar'>
+						Agregar
+					</Link>
+				</button>
+				{ this.mostrarContenido() }
+			</div>
+		)
+	}
+}
+
+const mapStateToProps = ({tareasReducer}) => tareasReducer;
+
+export default connect(mapStateToProps, tareasActions)(Tareas)
+```
 
 .src/components/Tareas/Guardar.js
 ```
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import * as tareasActions from '../../actions/tareasActions'
+
+import Spinner from '../General/Spinner'
+import Fatal from '../General/Fatal'
+import { Redirect } from 'react-router-dom'
 
 class Guardar extends Component {
 
@@ -36,6 +118,36 @@ class Guardar extends Component {
 		agregar(nueva_tarea)
 	}
 
+	deshabilitar = () => {
+		const {
+			usuario_id,
+			titulo,
+			cargando
+		} = this.props;
+
+		if(cargando){
+			return true;
+		}
+
+		if (!usuario_id || !titulo) {
+			return true;
+		}
+
+		return false;
+	}
+
+	mostrarAccion = () => {
+		const { error, cargando } = this.props;
+
+		if(cargando) {
+			return <Spinner />
+		}
+
+		if (error) {
+			return <Fatal mensaje={error} />
+		}
+	}
+
 	render() {
 		return (
 			<div>
@@ -55,7 +167,13 @@ class Guardar extends Component {
 				<br /><br />
 				<button
 					onClick={ this.guardar }
-				>Guardar</button>
+					disabled={this.deshabilitar()}
+				>
+					Guardar
+				</button>
+
+				{ this.mostrarAccion()}
+
 			</div>
 		)
 	}
@@ -66,53 +184,17 @@ const mapStateToProps = ({ tareasReducer }) => tareasReducer
 export default connect(mapStateToProps, tareasActions)(Guardar)
 ```
 
-.src/reducers/tareasReducer.js
-```
-import { TRAER_TODAS, CARGANDO, ERROR } from '../types/tareasTypes';
-
-const INITIAL_STATE = {
-	tareas: {},
-	cargando: false,
-	error: '',
-	usuario_id: '',
-	titulo: ''
-};
-
-export default (state = INITIAL_STATE, action) => {
-	switch (action.type) {
-		case TRAER_TODAS:
-			return {
-				...state,
-				tareas: action.payload,
-				cargando: false,
-				error: ''
-			};
-
-		case CARGANDO:
-			return { ...state, cargando: true };
-
-		case ERROR:
-			return { ...state, error: action.payload, cargando: false };
-
-		case 'cambio_Usuario_Id':
-			return { ...state, usuario_id: action.payload }
-		
-		case 'cambio_titulo':
-			return { ...state, titulo: action.payload }
-
-		case 'agregada':
-			return { ...state, tareas: {}, cargando: false, error: '' }
-
-		default: return state;
-	};
-}
-```
-
 .src/actions/tareasActions.js
-
 ```
 import axios from 'axios';
-import { TRAER_TODAS, CARGANDO, ERROR } from '../types/tareasTypes';
+import {
+	TRAER_TODAS,
+	CARGANDO,
+	ERROR,
+	CAMBIO_USUARIO_ID,
+	CAMBIO_TITULO,
+	AGREGADA
+} from '../types/tareasTypes';
 
 export const traerTodas = () => async (dispatch) => {
 
@@ -150,14 +232,14 @@ export const traerTodas = () => async (dispatch) => {
 
 export const cambioUsuarioId = (usuarioId) => (dispatch) => {
 	dispatch({
-		type: 'cambio_Usuario_Id',
+		type: CAMBIO_USUARIO_ID,
 		payload: usuarioId
 	})
 }
 
 export const cambioTitulo = (titulo) => (dispatch) => {
 	dispatch({
-		type: 'cambio_titulo',
+		type: CAMBIO_TITULO,
 		payload: titulo
 	})
 }
@@ -175,8 +257,7 @@ export const agregar = (nueva_tarea) => async (dispatch) => {
 		console.log(respuesta.data);
 
 		dispatch({
-			type: 'agregada'
-			
+			type: AGREGADA
 		})
 
 	}catch(error){
@@ -189,17 +270,61 @@ export const agregar = (nueva_tarea) => async (dispatch) => {
 }
 ```
 
-**Nota:** Podemos usar ***fetch*** en vez de Axios, para hacer el metodo POST.
-
-EJEMPLO
-
+.src/reducers/tareasReducer.js
 ```
-const data = await fetch("https://jsonplaceholder.typicode.com/todos", { 
-					method: 'POST', 
-					headers: {
-							'Content-Type': 'application/json'
-					},
-					body: JSON.stringify(newTask)
-			}
-	).then(response => response.json())
+import {
+	TRAER_TODAS,
+	CARGANDO,
+	ERROR,
+	CAMBIO_USUARIO_ID,
+	CAMBIO_TITULO,
+	AGREGADA
+} from '../types/tareasTypes';
+
+const INITIAL_STATE = {
+	tareas: {},
+	cargando: false,
+	error: '',
+	usuario_id: '',
+	titulo: ''
+};
+
+export default (state = INITIAL_STATE, action) => {
+	switch (action.type) {
+		case TRAER_TODAS:
+			return {
+				...state,
+				tareas: action.payload,
+				cargando: false,
+				error: ''
+			};
+
+		case CARGANDO:
+			return { ...state, cargando: true };
+
+		case ERROR:
+			return { ...state, error: action.payload, cargando: false };
+
+		case CAMBIO_USUARIO_ID:
+			return { ...state, usuario_id: action.payload }
+		
+		case CAMBIO_TITULO:
+			return { ...state, titulo: action.payload }
+
+		case AGREGADA:
+			return { ...state, tareas: {}, cargando: false, error: '' }
+
+		default: return state;
+	};
+}
+```
+
+.src/tipes/tareasTypes.js
+```
+export const TRAER_TODAS = 'tareas_traer_todas';
+export const CARGANDO = 'tareas_cargando';
+export const ERROR = 'tareas_error';
+export const CAMBIO_USUARIO_ID = 'tareas_cambio_usuario_id'
+export const CAMBIO_TITULO = 'tareas_cambio_titulo'
+export const AGREGADA = 'tareas_agregada'
 ```
