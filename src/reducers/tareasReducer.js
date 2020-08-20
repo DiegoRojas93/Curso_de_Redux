@@ -40,9 +40,6 @@ export default (state = INITIAL_STATE, action) => {
 		case CAMBIO_TITULO:
 			return { ...state, titulo: action.payload }
 
-		case ACTUALIZAR:
-			return { ...state, tareas: action.payload }
-
 		case GUARDAR:
 			return {
 				...state,
@@ -53,6 +50,9 @@ export default (state = INITIAL_STATE, action) => {
 				usuario_id: '',
 				titulo: ''
 			}
+
+		case ACTUALIZAR:
+			return { ...state, tareas: action.payload }
 
 		default: return state;
 	};

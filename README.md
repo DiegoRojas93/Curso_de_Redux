@@ -2,11 +2,11 @@
 
 [![Redux](https://i.ibb.co/WH2dzkQ/redux-simple.gif "Redux")](https://i.ibb.co/WH2dzkQ/redux-simple.gif "Redux")
 
-### PUT
+### DELETE
 
-Hemos encontrado un error al recargar la pagina de editar tareas, esto se debe a que la pagina quiere traer una tarea que todavia no exite; esto se arreglara.
+Ahora lo que vamos a hacer es que al boton de eliminar, haga la accion de eliminar las tareas de los usuarios, luego limpiar las tareas para poder recargar la pagina y ver cual fue la terea que se elimino.
 
-Tambien vamos a trabajar a que los checks de la pagina tareas no se borren al pasar entre paginas
+**Nota:** recuerda que el url no tine una base de datos real, por ello no sera posible eliminar un dato del listado de tareas.
 
 .src/components/Tareas/index.js
 ```
@@ -22,6 +22,12 @@ import Fatal from '../General/Fatal'
 class Tareas extends Component {
 
 	componentDidMount(){
+		if(!Object.keys(this.props.tareas).length){
+			this.props.traerTodas()
+		}
+	}
+
+	componentDidUpdate() {
 		if(!Object.keys(this.props.tareas).length){
 			this.props.traerTodas()
 		}
@@ -53,7 +59,7 @@ class Tareas extends Component {
 	}
 
 	ponerTareas = (usu_id) => {
-		const { tareas, cambioCheck } = this.props;
+		const { tareas, cambioCheck, eliminar } = this.props;
 
 		const por_usuario = {
 			...tareas[usu_id]
@@ -74,7 +80,7 @@ class Tareas extends Component {
 						Editar
 					</Link>
 				</button>
-				<button className="m_left">
+				<button className="m_left" onClick={ () => eliminar(tar_id) }>
 					Eliminar
 				</button>
 			</div>
@@ -82,6 +88,7 @@ class Tareas extends Component {
 	}
 
 	render() {
+		console.log(this.props.tareas);
 		return (
 			<div>
 				<button>
@@ -232,80 +239,27 @@ export const cambioCheck = (usu_id, tar_id) => (dispatch, getState) => {
 		payload: actualizadas
 	})
 }
-```
-.src/reducers/tareasReducer.js
-```
-import {
-	TRAER_TODAS,
-	CARGANDO,
-	ERROR,
-	CAMBIO_USUARIO_ID,
-	CAMBIO_TITULO,
-	GUARDAR,
-	ACTUALIZAR
-} from '../types/tareasTypes';
 
-const INITIAL_STATE = {
-	tareas: {},
-	cargando: false,
-	error: '',
-	usuario_id: '',
-	titulo: '',
-	regresar: false
-};
+export const eliminar = (tar_id) => async (dispatch) => {
+	dispatch({
+		type: CARGANDO
+	})
 
-export default (state = INITIAL_STATE, action) => {
-	switch (action.type) {
-		case TRAER_TODAS:
-			return {
-				...state,
-				tareas: action.payload,
-				cargando: false,
-				error: '',
-				regresar: false
-			};
+	try {
+		const respuesta = await axios.delete(`https://jsonplaceholder.typicode.com/todos/${tar_id}`);
 
-		case CARGANDO:
-			return { ...state, cargando: true };
+		console.log(respuesta);
 
-		case ERROR:
-			return { ...state, error: action.payload, cargando: false };
-
-		case CAMBIO_USUARIO_ID:
-			return { ...state, usuario_id: action.payload }
-
-		case CAMBIO_TITULO:
-			return { ...state, titulo: action.payload }
-
-		case ACTUALIZAR:
-			return { ...state, tareas: action.payload }
-
-		case GUARDAR:
-			return {
-				...state,
-				tareas: {},
-				cargando: false,
-				error: '',
-				regresar: true,
-				usuario_id: '',
-				titulo: ''
-			}
-
-		default: return state;
-	};
+		dispatch({
+			type: TRAER_TODAS,
+			payload: {}
+		})
+	} catch (error) {
+		console.log(error.message);
+		dispatch({
+			type:ERROR,
+			payload: 'Servicio no disponible'
+		});
+	}
 }
 ```
-
-.src/types/tareasTypes.js
-```
-export const TRAER_TODAS = 'tareas_traer_todas';
-export const CARGANDO = 'tareas_cargando';
-export const ERROR = 'tareas_error';
-export const CAMBIO_USUARIO_ID = 'tareas_cambio_usuario_id'
-export const CAMBIO_TITULO = 'tareas_cambio_titulo'
-export const AGREGADA = 'tareas_agregada'
-export const GUARDAR= 'tareas_guardar'
-export const ACTUALIZAR= 'tareas_Actualizar'
-```
-
-[Inmutabilidad](https://redux.js.org/recipes/structuring-reducers/immutable-update-patterns#correct-approach-copying-all-levels-of-nested-data "Inmutabilidad")
